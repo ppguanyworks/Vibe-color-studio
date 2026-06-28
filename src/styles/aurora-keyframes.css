@@ -1,0 +1,50 @@
+/* Lissajous-style blob motion — synced with export CSS via ?raw import */
+
+@keyframes float1{
+  0%   { transform: translate(0, 0) scale(1); }
+  25%  { transform: translate(20%, 17%) scale(1.16); }
+  50%  { transform: translate(-17%, -22%) scale(0.94); }
+  75%  { transform: translate(12%, -12%) scale(1.18); }
+  100% { transform: translate(0, 0) scale(1); }
+}
+
+@keyframes float2{
+  0%   { transform: translate(0, 0) scale(1.05); }
+  25%  { transform: translate(-22%, 14%) scale(1.16); }
+  50%  { transform: translate(17%, -19%) scale(0.92); }
+  75%  { transform: translate(-10%, 20%) scale(1.12); }
+  100% { transform: translate(0, 0) scale(1.05); }
+}
+
+@keyframes float3{
+  0%   { transform: translate(0, 0) scale(1); }
+  25%  { transform: translate(15%, -17%) scale(1.14); }
+  50%  { transform: translate(-20%, 12%) scale(1.03); }
+  75%  { transform: translate(8%, 24%) scale(0.9); }
+  100% { transform: translate(0, 0) scale(1); }
+}
+
+@keyframes float4{
+  0%   { transform: translate(0, 0) scale(1.03); }
+  25%  { transform: translate(-19%, -15%) scale(1.1); }
+  50%  { transform: translate(24%, 19%) scale(0.95); }
+  75%  { transform: translate(-12%, 8%) scale(1.16); }
+  100% { transform: translate(0, 0) scale(1.03); }
+}
+
+@keyframes float5{
+  0%   { transform: translate(0, 0) scale(1.02); }
+  25%  { transform: translate(-15%, -20%) scale(1.2); }
+  50%  { transform: translate(19%, 15%) scale(0.92); }
+  75%  { transform: translate(-8%, 17%) scale(1.14); }
+  100% { transform: translate(0, 0) scale(1.02); }
+}
+
+@keyframes aurora-breathe{
+  0%, 100% { filter: blur(var(--blob-blur, 34px)); }
+  50%      { filter: blur(var(--blob-blur-peak, 40px)); }
+}
+
+@media (prefers-reduced-motion: reduce){
+  .aurora-blob{ animation: none !important; filter: blur(var(--blob-blur, 34px)) !important; }
+}

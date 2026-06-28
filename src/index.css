@@ -1,0 +1,55 @@
+@import "tailwindcss";
+
+:root{
+  --bg: #07080c;
+  --surface: rgba(255,255,255,0.038);
+  --surface-2: rgba(255,255,255,0.06);
+  --border: rgba(255,255,255,0.09);
+  --border-strong: rgba(255,255,255,0.16);
+  --hi: rgba(255,255,255,0.94);
+  --mid: rgba(255,255,255,0.62);
+  --lo: rgba(255,255,255,0.40);
+  --dim: rgba(255,255,255,0.26);
+  --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+}
+
+*{ box-sizing:border-box; }
+html,body,#root{ margin:0; padding:0; min-height:100%; }
+body{
+  font-family:var(--sans);
+  color:var(--hi);
+  background:var(--bg);
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
+}
+
+/* ---------- range sliders ---------- */
+.slider{
+  -webkit-appearance:none; appearance:none; width:100%; height:4px; border-radius:4px;
+  background:rgba(255,255,255,0.13); outline:none; cursor:pointer;
+}
+.slider::-webkit-slider-thumb{
+  -webkit-appearance:none; appearance:none; width:15px; height:15px; border-radius:50%;
+  background:#fff; border:none; box-shadow:0 1px 6px rgba(0,0,0,.5); transition:transform .12s;
+}
+.slider::-webkit-slider-thumb:hover{ transform:scale(1.18); }
+.slider.hue-track{ background:linear-gradient(90deg,
+  hsl(0 75% 60%),hsl(60 75% 60%),hsl(120 75% 60%),hsl(180 75% 60%),
+  hsl(240 75% 60%),hsl(300 75% 60%),hsl(360 75% 60%)); }
+
+/* ---------- aurora blobs ---------- */
+@import "./styles/aurora-keyframes.css";
+
+.aurora-bg{ position:absolute; inset:0; overflow:hidden; }
+.aurora-blob{
+  position:absolute; border-radius:50%;
+  filter:blur(var(--blob-blur, 34px)); will-change:transform, filter; transform-origin:center;
+  animation-timing-function: cubic-bezier(0.45, 0.05, 0.55, 0.95);
+}
+
+/* hide native number spinners not needed */
+.codeblock{ font-family:var(--mono); font-size:11px; line-height:1.55; white-space:pre;
+  overflow:auto; }
+.codeblock::-webkit-scrollbar{ width:8px; height:8px; }
+.codeblock::-webkit-scrollbar-thumb{ background:rgba(255,255,255,.14); border-radius:4px; }
