@@ -2,7 +2,7 @@
 
 > **用途：** 后续迭代、修 bug、调参、接需求时的**单一事实源**。  
 > 给人和 AI 读：开新对话时 `@docs/PROJECT_REFERENCE.md` 即可恢复项目上下文。  
-> **路径：** `vibe-color-studio/` · **最后同步：** 2026-08-09（默认 Tab → HEX）  
+> **路径：** `vibe-color-studio/` · **最后同步：** 2026-08-17（GitHub Pages）  
 > **约定：** 改布局 / 组件 / 默认值 / 色彩规则 / 导出后，**同步更新本文 + README**（见仓库 `.cursor/rules/sync-project-docs.mdc`）。
 
 ---
@@ -93,6 +93,7 @@ vibe-color-studio/
 ```bash
 cd vibe-color-studio && npm install && npm run dev
 # http://localhost:5173 （勿用 127.0.0.1；会话空闲后进程可能退出，需重新 npm run dev）
+# 在线：https://ppguanyworks.github.io/Vibe-color-studio/
 ```
 
 ---
@@ -242,6 +243,7 @@ profile 0 的 `lT/hueK/chromaK` **不参与颜色计算**；仅 size / softEdge 
 | chrome 字体 | Urbanist Variable |
 | 手机 Mock 字体 | TikTok Sans VF（本机 `public/fonts/`，不进 Git；缺字回退系统字体） |
 | Tailwind v4 | `scale-*` 是独立 `scale` 属性，transition 勿只写 `transform` |
+| 托管 | GitHub Pages + Actions；仓库需 Public（免费账号私有仓不能开 Pages） |
 
 ---
 
@@ -252,7 +254,7 @@ profile 0 的 `lT/hueK/chromaK` **不参与颜色计算**；仅 size / softEdge 
 3. **无持久化** — 刷新丢状态；无用户系统。
 4. **Light + Mock** — Feed Mock 主要服务 Dark HEX 预览；图片模式未上传时眼睛按钮几乎无可见效果。
 5. **PNG 依赖 DOM** — headless/隐藏 tab 可能截不到；靠 Canvas fallback。
-6. **dev server** — 须 `npm run dev` 且保持进程；Cursor 会话空闲 / 休眠后常会停掉。
+6. **dev server** — 须 `npm run dev` 且保持进程；Cursor 会话空闲 / 休眠后常会停掉。分享给别人用 GitHub Pages：https://ppguanyworks.github.io/Vibe-color-studio/
 7. **改 BLOB_PROFILES** — 同步更新本文 §5.3。
 8. **改 gradCss/blur** — 同步 `blobGradient.ts`、`PhonePreview`、`generators.ts`、`renderBackgroundImage.ts`。
 9. **窄屏** — 右栏固定 320px；&lt; ~640px 舞台会挤；工具栏在 `lg` 以下图标化。
@@ -269,7 +271,7 @@ profile 0 的 `lT/hueK/chromaK` **不参与颜色计算**；仅 size / softEdge 
 - [ ] Light 模式 Mock + 对比度策略完善
 - [ ] 光斑数量可配置（若产品重新需要）
 - [ ] 窄屏右栏折叠 / 抽屉（产品待定）
-- [ ] 部署静态站（GitHub Pages / Vercel），摆脱本地 dev 依赖
+- [x] 部署静态站（GitHub Pages）：`.github/workflows/deploy-pages.yml`，`vite.config.ts` 在 CI 设 `base: /Vibe-color-studio/`
 
 ---
 
@@ -291,6 +293,7 @@ profile 0 的 `lT/hueK/chromaK` **不参与颜色计算**；仅 size / softEdge 
 | 设计 token / chrome 字体 | `index.css` |
 | 动效路径 | `styles/aurora-keyframes.css` |
 | 整体壳子 | `App.tsx` |
+| GitHub Pages | `.github/workflows/deploy-pages.yml` · `vite.config.ts` `base` |
 
 ---
 

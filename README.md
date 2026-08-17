@@ -20,6 +20,8 @@ npm run dev
 
 浏览器打开 [http://localhost:5173/](http://localhost:5173/)（勿用 `127.0.0.1`，本机 Vite 可能只监听 IPv6 / localhost）。
 
+在线预览（GitHub Pages）：https://ppguanyworks.github.io/Vibe-color-studio/
+
 | 命令 | 说明 |
 |------|------|
 | `npm run dev` | 开发服务器（须保持终端运行） |
@@ -53,4 +55,5 @@ UI 字体：Urbanist · 手机 Mock 字体：TikTok Sans（本机 `public/fonts/
 
 ## 仓库
 
-GitHub：https://github.com/ppguanyworks/Vibe-color-studio
+GitHub：https://github.com/ppguanyworks/Vibe-color-studio  
+在线站点：https://ppguanyworks.github.io/Vibe-color-studio/
