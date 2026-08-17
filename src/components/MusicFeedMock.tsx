@@ -276,7 +276,7 @@ function HomeIndicator() {
 /** Figma feed mock (node 380:59109) — TUX tokens, scaled to phone preview. */
 export function MusicFeedMock() {
   return (
-    <div className="relative z-[2] h-full flex flex-col overflow-hidden">
+    <div className="phone-mock relative z-[2] h-full flex flex-col overflow-hidden">
       <StatusBar />
       <HomeNavBar />
 

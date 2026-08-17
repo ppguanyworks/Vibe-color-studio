@@ -98,6 +98,9 @@ export async function downloadBackgroundPng(a: AuroraResult, scale = 3): Promise
   const link = document.createElement('a')
   link.href = url
   link.download = `vibe-background-${Date.now()}.png`
+  document.body.appendChild(link)
   link.click()
-  URL.revokeObjectURL(url)
+  link.remove()
+  // Revoking synchronously can cancel the download before the browser reads the blob.
+  setTimeout(() => URL.revokeObjectURL(url), 10_000)
 }

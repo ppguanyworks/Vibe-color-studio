@@ -1,26 +1,20 @@
 import { useCallback, useMemo, useRef, useState } from 'react'
-import type { AuroraResult } from '../color/aurora'
+import type { AuroraResult, Blob as AuroraBlob } from '../color/aurora'
 import { BLOB_COUNT, clampAnchor } from '../color/blobLayout'
 import { useStudio } from '../store/useStudio'
-import { SectionLabel } from './ui'
 
 const BLOB_LABELS = ['主色', '右上', '左下', '右下', '上中'] as const
 
-interface BlobLayoutEditorProps {
-  a: AuroraResult
-}
-
-export function BlobLayoutEditor({ a }: BlobLayoutEditorProps) {
+export function BlobLayoutEditor({ a }: { a: AuroraResult }) {
   const canvasRef = useRef<HTMLDivElement>(null)
   const dragIndex = useRef<number | null>(null)
   const [activeIndex, setActiveIndex] = useState<number | null>(null)
 
   const blobAnchors = useStudio((s) => s.blobAnchors)
   const setBlobAnchor = useStudio((s) => s.setBlobAnchor)
-  const resetBlobAnchors = useStudio((s) => s.resetBlobAnchors)
 
   const blobsByProfile = useMemo(() => {
-    const map = new Map<number, (typeof a.blobs)[0]>()
+    const map = new Map<number, AuroraBlob>()
     for (const b of a.blobs) map.set(b.profileId, b)
     return map
   }, [a.blobs])
@@ -68,24 +62,10 @@ export function BlobLayoutEditor({ a }: BlobLayoutEditorProps) {
   const activeAnchor = activeIndex !== null ? blobAnchors[activeIndex] : null
 
   return (
-    <section className="rounded-[14px] border border-white/10 bg-white/[0.04] p-5">
-      <div className="flex items-start justify-between gap-3 mb-3">
-        <div>
-          <SectionLabel>光斑布局</SectionLabel>
-          <p className="text-[11px] text-white/45 leading-snug -mt-1">拖动控制点，预览区保持真实效果</p>
-        </div>
-        <button
-          type="button"
-          onClick={resetBlobAnchors}
-          className="shrink-0 rounded-[8px] px-2.5 py-1 text-[11px] font-semibold border border-white/12 bg-white/[0.04] text-white/55 hover:text-white/85 hover:bg-white/[0.08] transition-colors"
-        >
-          重置
-        </button>
-      </div>
-
+    <div className="flex flex-col gap-3">
       <div
         ref={canvasRef}
-        className="relative mx-auto w-full max-w-[168px] aspect-[268/552] rounded-[12px] border border-white/12 overflow-hidden touch-none select-none bg-black/40"
+        className="relative mx-auto w-full max-w-[152px] aspect-[268/552] rounded-[var(--r-md)] border border-[var(--line-2)] overflow-hidden touch-none select-none bg-black/40"
         onPointerMove={onCanvasPointerMove}
         onPointerUp={endDrag}
         onPointerCancel={endDrag}
@@ -114,7 +94,12 @@ export function BlobLayoutEditor({ a }: BlobLayoutEditorProps) {
           })}
         </div>
 
-        <svg className="absolute inset-0 pointer-events-none text-white/10" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden>
+        <svg
+          className="absolute inset-0 pointer-events-none text-white/[0.08]"
+          viewBox="0 0 100 100"
+          preserveAspectRatio="none"
+          aria-hidden
+        >
           <line x1="50" y1="0" x2="50" y2="100" stroke="currentColor" strokeWidth="0.35" vectorEffect="non-scaling-stroke" />
           <line x1="0" y1="50" x2="100" y2="50" stroke="currentColor" strokeWidth="0.35" vectorEffect="non-scaling-stroke" />
         </svg>
@@ -128,47 +113,43 @@ export function BlobLayoutEditor({ a }: BlobLayoutEditorProps) {
               aria-label={`${BLOB_LABELS[i]} 光斑`}
               aria-pressed={selected}
               onPointerDown={startDrag(i)}
-              className={`absolute z-[2] -translate-x-1/2 -translate-y-1/2 rounded-full border-2 touch-none outline-none transition-[transform,box-shadow] duration-150 ease-out ${
+              className={`absolute z-[2] -translate-x-1/2 -translate-y-1/2 rounded-full border touch-none outline-none transition-[scale,box-shadow] duration-150 ease-out cursor-grab active:cursor-grabbing ${
                 selected
-                  ? 'w-[14px] h-[14px] border-white shadow-[0_0_0_3px_rgba(255,255,255,0.18)] scale-110'
-                  : 'w-3 h-3 border-white/85 hover:scale-110'
-              } cursor-grab active:cursor-grabbing focus-visible:ring-2 focus-visible:ring-white/60`}
-              style={{
-                left: `${x}%`,
-                top: `${y}%`,
-                background: handleColors[i] ?? '#fff',
-              }}
+                  ? 'w-3 h-3 border-white shadow-[0_0_0_3px_rgba(255,255,255,0.16)]'
+                  : 'w-2.5 h-2.5 border-white/70 hover:scale-115'
+              }`}
+              style={{ left: `${x}%`, top: `${y}%`, background: handleColors[i] ?? '#fff' }}
             />
           )
         })}
       </div>
 
-      {activeAnchor && activeIndex !== null && (
-        <p className="mt-2 text-center text-[10px] font-mono text-white/45 tabular-nums">
-          {BLOB_LABELS[activeIndex]} · {Math.round(activeAnchor[0])}%, {Math.round(activeAnchor[1])}%
-        </p>
-      )}
-
-      <div className="mt-3 flex flex-wrap gap-1.5">
+      <div className="flex flex-wrap gap-1">
         {BLOB_LABELS.map((label, i) => (
           <button
             key={label}
             type="button"
             onClick={() => setActiveIndex(i)}
-            className={`inline-flex items-center gap-1.5 rounded-[6px] px-2 py-1 text-[10px] font-medium border transition-colors ${
+            className={`inline-flex items-center gap-1.5 h-6 px-2 rounded-[var(--r-xs)] text-[10.5px] font-medium border transition-colors ${
               activeIndex === i
-                ? 'border-white/25 bg-white/[0.10] text-white/85'
-                : 'border-white/10 bg-white/[0.02] text-white/45 hover:text-white/65 hover:bg-white/[0.05]'
+                ? 'border-[var(--line-3)] bg-white/[0.08] text-[var(--ink)]'
+                : 'border-[var(--line)] bg-transparent text-[var(--ink-3)] hover:text-[var(--ink-2)] hover:bg-white/[0.04]'
             }`}
           >
             <span
-              className="w-2.5 h-2.5 rounded-full border border-white/25 shrink-0"
+              className="w-2 h-2 rounded-full border border-white/20 shrink-0"
               style={{ background: handleColors[i] }}
             />
             {label}
           </button>
         ))}
       </div>
-    </section>
+
+      <p className="num h-3 text-[10px] text-[var(--ink-4)] leading-none m-0">
+        {activeAnchor && activeIndex !== null
+          ? `${BLOB_LABELS[activeIndex]} · ${Math.round(activeAnchor[0])}% ${Math.round(activeAnchor[1])}%`
+          : '拖动控制点调整位置'}
+      </p>
+    </div>
   )
 }

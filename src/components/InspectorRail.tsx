@@ -1,0 +1,42 @@
+import { useState } from 'react'
+import type { AuroraResult } from '../color/aurora'
+import { useStudio } from '../store/useStudio'
+import { BlobLayoutEditor } from './BlobLayoutEditor'
+import { InspectorPanel } from './InspectorPanel'
+import { CollapsibleSection, Divider, GhostButton, PrimaryButton } from './ui'
+import { Code, Reset } from './icons'
+
+export function InspectorRail({ a, onExportCode }: { a: AuroraResult; onExportCode: () => void }) {
+  const [layoutOpen, setLayoutOpen] = useState(false)
+  const resetBlobAnchors = useStudio((s) => s.resetBlobAnchors)
+
+  return (
+    <aside className="shrink-0 w-[320px] h-full flex flex-col border-l border-[var(--line)] bg-[var(--bg-rail)]">
+      <div className="flex-1 min-h-0 overflow-y-auto scroll-thin">
+        <InspectorPanel />
+        <Divider />
+        <CollapsibleSection
+          label="光斑布局"
+          open={layoutOpen}
+          onToggle={() => setLayoutOpen((v) => !v)}
+          action={
+            <GhostButton onClick={resetBlobAnchors} title="恢复默认锚点">
+              <Reset size={12} />
+              重置
+            </GhostButton>
+          }
+        >
+          <BlobLayoutEditor a={a} />
+        </CollapsibleSection>
+      </div>
+
+      <div className="shrink-0 px-4 pt-3.5 pb-4 border-t border-[var(--line)]">
+        <PrimaryButton onClick={onExportCode}>
+          <Code size={15} />
+          导出代码
+        </PrimaryButton>
+        <p className="micro mt-2.5 text-center text-[var(--ink-4)]">CSS · 静态 · JSON</p>
+      </div>
+    </aside>
+  )
+}

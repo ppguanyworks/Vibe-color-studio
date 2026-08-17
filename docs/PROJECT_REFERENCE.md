@@ -2,7 +2,8 @@
 
 > **用途：** 后续迭代、修 bug、调参、接需求时的**单一事实源**。  
 > 给人和 AI 读：开新对话时 `@docs/PROJECT_REFERENCE.md` 即可恢复项目上下文。  
-> **路径：** `vibe-color-studio/` · **最后同步：** 2026-06
+> **路径：** `vibe-color-studio/` · **最后同步：** 2026-08-09（默认 Tab → HEX）  
+> **约定：** 改布局 / 组件 / 默认值 / 色彩规则 / 导出后，**同步更新本文 + README**（见仓库 `.cursor/rules/sync-project-docs.mdc`）。
 
 ---
 
@@ -15,7 +16,8 @@
 | **输出** | 5 光斑渐变 + 手机预览 + CSS / JSON / PNG 导出 |
 | **核心函数** | `generateAurora()` ← `useStudio` 状态 |
 | **参数真源** | `src/color/aurora.ts` → `BLOB_PROFILES` |
-| **默认模式** | `inputMode: 'image'`，`lightnessId: 'dark'` |
+| **默认模式** | `inputMode: 'hex'`，`lightnessId: 'dark'`，`showOverlay: true` |
+| **UI 风格** | Framer 式近黑极简 · Urbanist（chrome）· TikTok Sans（手机 Mock） |
 
 ---
 
@@ -32,25 +34,32 @@
 ## 2. 界面与数据流
 
 ```
-用户操作 (InspectorPanel / BlobLayoutEditor / LightnessTabs)
+用户操作
+  · InspectorRail（输入 / 渐变 / 光斑布局）
+  · BottomToolbar（明度 · 下载帧 · 导出 · 隐藏 overlay）
         ↓
-useStudio (zustand) — seedH/C, anchorOklch, blobAnchors, richness, …
+useStudio (zustand)
         ↓
 App.tsx useMemo → generateAurora(params) → AuroraResult
         ↓
-PhonePreview (渲染) · ExportDrawer (CSS/JSON) · renderBackgroundImage (PNG)
+PhonePreview · ExportModal · downloadBackgroundPng
 ```
 
-**三栏布局：**
+**布局（2026-07 重设计后）：**
 
 | 区域 | 组件 | 职责 |
 |------|------|------|
-| 左 300px | `InspectorPanel` | 输入、提取主色、渐变滑块 |
-| 左 300px | `BlobLayoutEditor` | 5 光斑锚点拖拽（预览用真实 gradCss） |
-| 中 | `PreviewStage` | 明度 Tab + 手机框 + 对比度条 |
-| 右 | `ExportDrawer` | CSS / 静态 / JSON + PNG |
+| 顶栏 | `AppHeader` | 品牌词 + 快捷键提示（←→ 明度 · ⌘E 导出） |
+| 中 | `PreviewStage` + `PhonePreview` | 手机框预览；短视口用 `.phone-fit` 缩放 |
+| 底悬浮 | `BottomToolbar` | 明度切换、当前帧 PNG、打开导出、`ContrastChip`、眼睛切换 overlay |
+| 右 320px | `InspectorRail` | `InspectorPanel` + 折叠「光斑布局」+ 底部白色「导出代码」 |
+| 弹层 | `ExportModal` | CSS / 静态 / JSON 三 Tab + 复制（**已取代**常驻 `ExportDrawer`） |
+
+**快捷键：** `⌘/Ctrl+E` 打开导出；`←` `→` 切换 Light/Dark（输入框内不触发）；`Esc` 关弹窗。
 
 **渲染链：** `App.tsx` 是唯一把 store 接到 `generateAurora` 的地方；改参数默认值看 `useStudio.ts`，改生成逻辑看 `aurora.ts`。
+
+**已删除（勿再引用）：** `ExportDrawer`、`LightnessTabs`、`PreviewStatusBar`。
 
 ---
 
@@ -58,32 +67,32 @@ PhonePreview (渲染) · ExportDrawer (CSS/JSON) · renderBackgroundImage (PNG)
 
 ```
 vibe-color-studio/
+├── public/fonts/TikTokSans-VF.ttf   # 仅手机 Mock 使用
 ├── src/
-│   ├── App.tsx                 # store → aurora → 三栏
-│   ├── store/useStudio.ts      # 全局状态、图片加载、取色写回
-│   ├── color/
-│   │   ├── aurora.ts           # ★ 光斑 profile、颜色推导、对比度
-│   │   ├── seedColor.ts        # HEX↔HSL/OKLCH、Figma 对齐色相
-│   │   ├── flyExtract.ts       # 图片 OKLab 聚类
-│   │   ├── flyExtractConfig.ts # Fly 容差映射
-│   │   ├── quantize.ts         # extractFromImage 入口
-│   │   ├── blobLayout.ts       # 锚点、DEFAULT_BLOB_ANCHORS、size
-│   │   ├── blobGradient.ts     # gradCss、blur 常量、Canvas 停点
-│   │   └── oklch.ts            # resolve、对比度
-│   ├── presets/lightness.ts    # dark / light 预设
-│   ├── components/             # UI
-│   ├── export/                 # generators.ts、renderBackgroundImage.ts
+│   ├── App.tsx                      # header + stage + rail + modal / 快捷键
+│   ├── index.css                    # 设计 token、Urbanist、.phone-mock / .glass
+│   ├── store/useStudio.ts
+│   ├── color/                       # aurora · seed · fly · blob* · oklch
+│   ├── components/
+│   │   ├── AppHeader · BottomToolbar · ContrastChip
+│   │   ├── InspectorRail · InspectorPanel · BlobLayoutEditor
+│   │   ├── PreviewStage · PhonePreview · MusicFeedMock
+│   │   ├── ExportModal · ui · icons
+│   ├── export/generators.ts · renderBackgroundImage.ts
+│   ├── presets/lightness.ts
+│   ├── tokens/tux-preview.ts        # Feed Mock 尺寸 / 色 token
 │   └── styles/aurora-keyframes.css
-└── docs/PROJECT_REFERENCE.md   # 本文档
+├── docs/PROJECT_REFERENCE.md
+└── README.md
 ```
 
-**依赖：** Vite 8 · React 19 · Tailwind 4 · culori · zustand · html-to-image
+**依赖：** Vite 8 · React 19 · Tailwind 4 · culori · zustand · html-to-image · `@fontsource-variable/urbanist`
 
 **运行：**
 
 ```bash
 cd vibe-color-studio && npm install && npm run dev
-# http://localhost:5173 （勿用 127.0.0.1 若 IPv6 -only）
+# http://localhost:5173 （勿用 127.0.0.1；会话空闲后进程可能退出，需重新 npm run dev）
 ```
 
 ---
@@ -92,7 +101,7 @@ cd vibe-color-studio && npm install && npm run dev
 
 | 字段 | 默认 | 说明 |
 |------|------|------|
-| `inputMode` | `'image'` | 切到 hex 会清 `lastExtraction` |
+| `inputMode` | `'hex'` | 切到 hex 会清 `lastExtraction`；分段控件顺序：色值 HEX → 图片取色 |
 | `hex` | `#4A6CF7` | **图片模式下 UI 不应用此值展示主色** |
 | `mergeSimilar` | `0.4` | → Fly tolerance 4 |
 | `richness` | `0.4` | 丰富度 |
@@ -100,10 +109,11 @@ cd vibe-color-studio && npm install && npm run dev
 | `luminance` | `0` | 整体明度 ±1 → OKLCH L ±0.38 |
 | `lightnessId` | `'dark'` | |
 | `blobAnchors` | 见 `blobLayout.ts` | 5 点：TL/TR/BL/BR/上中 |
+| `showOverlay` | `true` | 手机内 Feed Mock / 图片叠层；工具栏眼睛切换 |
 
 **图片取色写回：** `loadImage` / `setMerge` → `applyExtractedMain()` 更新 `seedH`、`seedC`、`anchorOklch`、`anchorHsl`、`palette`、`lastExtraction`。**不更新 `hex` 字段。**
 
-**Inspector 主色展示：** 图片模式必须用 `palette[0].hex` / `anchorOklch`，不能用 store 里的 `hex`（曾因此出现色块与 H/C 数值不一致的 bug）。
+**Inspector 主色展示：** 图片模式必须用 `palette[0].hex` / `anchorOklch`，不能用 store 里的 `hex`。
 
 ---
 
@@ -159,8 +169,8 @@ profile 0 的 `lT/hueK/chromaK` **不参与颜色计算**；仅 size / softEdge 
 ### 5.6 对比度
 
 - 目标 ≥ **4.6:1**（`CONTRAST_TARGET`）
-- `enforceContrast` **只压 base 底色**，不压亮 blob（避免把高光光斑压暗）
-- 展示：底色 + 各 blob 停靠点中最差 WCAG + APCA Lc
+- `enforceContrast` **只压 base 底色**，不压亮 blob
+- UI：`ContrastChip` 默认 `4.5:1`（一位小数）+ 等级徽章；hover 显示完整 WCAG / APCA / 文字色
 
 ---
 
@@ -205,7 +215,9 @@ profile 0 的 `lT/hueK/chromaK` **不参与颜色计算**；仅 size / softEdge 
 | CSS | `export/generators.ts` | 含 keyframes、每 blob gradCss/blur/delay |
 | 静态 | 固定 anchor 位置的 radial 叠层 | 无动画 |
 | JSON | params + blobs + 可选 extraction | 图片模式带 Fly meta |
-| PNG | `html-to-image` 截 `[data-aurora-export-root]` | 失败回退 Canvas（可能与 live 帧略有差） |
+| PNG | `html-to-image` 截 `[data-aurora-export-root]` | 失败回退 Canvas；revoke blob URL 延后约 10s |
+
+入口：工具栏「导出代码」/ 右栏底部按钮 → `ExportModal`；工具栏「当前帧」→ `downloadBackgroundPng`。
 
 改预览样式时，**同步检查** CSS 导出与 PNG 路径。
 
@@ -218,26 +230,33 @@ profile 0 的 `lT/hueK/chromaK` **不参与颜色计算**；仅 size / softEdge 
 | 光斑数量 | 固定 5，移除 3/4/5 选择器 |
 | 色相展示 | HSL（对齐 Figma），非 OKLCH.h |
 | 主色 blob | 精确 anchorOklch，不跑 hueK 公式 |
-| 布局 | 左栏 BlobLayoutEditor 拖拽；手机预览无手柄 |
+| 布局（旧） | 左栏 BlobLayoutEditor；手机预览无手柄 |
+| 布局（2026-07） | Framer 风：右栏控制 + 底悬浮工具栏 + 导出弹窗；光斑布局默认折叠 |
 | 渐变方向 | 左上亮、右下暗；enforceContrast 不压亮 blob |
 | 整体明度 | 独立 slider，作用于 base/text/全部 blob |
 | 动画 | Plan A 纯 CSS；Plan B WebGL 未做 |
 | 主色/上中面积 | 125%（其余 150%） |
 | 右上 hueK | −0.95（负偏加大） |
 | Inspector 图片主色 | 展示提取色，非 store.hex |
+| 对比度条 | 精简为 `ContrastChip`：一位小数 + 徽章 + 文字方向；细节进 hover |
+| chrome 字体 | Urbanist Variable |
+| 手机 Mock 字体 | TikTok Sans VF（本机 `public/fonts/`，不进 Git；缺字回退系统字体） |
+| Tailwind v4 | `scale-*` 是独立 `scale` 属性，transition 勿只写 `transform` |
 
 ---
 
 ## 10. 已知限制 & 勿踩坑
 
 1. **`hex` 与图片模式脱节** — 展示/导出 seed 色时用 `palette[0]` 或 `anchorOklch`，不要用 `hex`。
-2. **Fly 仅为 Web 近似** — 与 Native 可能有 ΔE 差异；对齐需加 parity 测试。
+2. **Fly 仅为 Web 近似** — 与 Native 可能有 ΔE 差异。
 3. **无持久化** — 刷新丢状态；无用户系统。
-4. **Light + Mock** — Feed Mock 主要服务 Dark HEX 预览。
+4. **Light + Mock** — Feed Mock 主要服务 Dark HEX 预览；图片模式未上传时眼睛按钮几乎无可见效果。
 5. **PNG 依赖 DOM** — headless/隐藏 tab 可能截不到；靠 Canvas fallback。
-6. **dev server** — 须 `npm run dev`；PATH 需 node（nvm）。
-7. **改 BLOB_PROFILES** — 同步更新本文 §5.3；考虑黄绿补偿是否仍合理。
+6. **dev server** — 须 `npm run dev` 且保持进程；Cursor 会话空闲 / 休眠后常会停掉。
+7. **改 BLOB_PROFILES** — 同步更新本文 §5.3。
 8. **改 gradCss/blur** — 同步 `blobGradient.ts`、`PhonePreview`、`generators.ts`、`renderBackgroundImage.ts`。
+9. **窄屏** — 右栏固定 320px；&lt; ~640px 舞台会挤；工具栏在 `lg` 以下图标化。
+10. **勿引用已删组件** — `ExportDrawer` / `LightnessTabs` / `PreviewStatusBar`。
 
 ---
 
@@ -249,7 +268,8 @@ profile 0 的 `lT/hueK/chromaK` **不参与颜色计算**；仅 size / softEdge 
 - [ ] Figma 插件 / Code Connect
 - [ ] Light 模式 Mock + 对比度策略完善
 - [ ] 光斑数量可配置（若产品重新需要）
-- [ ] `PRODUCT.md` / 设计系统 formalize（impeccable init 未完成）
+- [ ] 窄屏右栏折叠 / 抽屉（产品待定）
+- [ ] 部署静态站（GitHub Pages / Vercel），摆脱本地 dev 依赖
 
 ---
 
@@ -263,10 +283,14 @@ profile 0 的 `lT/hueK/chromaK` **不参与颜色计算**；仅 size / softEdge 
 | 取色 / 合并容差 | `flyExtract*.ts` · `quantize.ts` · `InspectorPanel` |
 | HEX / HSL 解析 | `seedColor.ts` |
 | 深浅色预设 | `presets/lightness.ts` |
-| 默认值 / 加载图片 | `store/useStudio.ts` |
-| 导出格式 | `export/generators.ts` |
-| 预览 UI | `components/PhonePreview.tsx` 等 |
+| 默认值 / 加载图片 / overlay | `store/useStudio.ts` |
+| 导出格式 / 弹窗 | `export/generators.ts` · `ExportModal` |
+| PNG 下载 | `export/renderBackgroundImage.ts` |
+| 顶栏 / 工具栏 / 右栏 | `AppHeader` · `BottomToolbar` · `InspectorRail` |
+| 手机 Mock UI / 字体 | `MusicFeedMock` · `tokens/tux-preview` · `index.css` `.phone-mock` |
+| 设计 token / chrome 字体 | `index.css` |
 | 动效路径 | `styles/aurora-keyframes.css` |
+| 整体壳子 | `App.tsx` |
 
 ---
 
@@ -282,22 +306,23 @@ profile 0 的 `lT/hueK/chromaK` **不参与颜色计算**；仅 size / softEdge 
 | lT | profile 内明度档位 0–1 |
 | softEdge | 主色多段渐变，边缘更融 |
 | gradCss | 预生成的 radial-gradient 字符串 |
+| showOverlay | 手机框内 Feed/图片叠层开关 |
 
 ---
 
 ## 14. 文档维护约定
 
-**何时更新本文：**
+**何时更新本文 + README：**
 
-- 修改 `BLOB_PROFILES`、默认值、取色管线、导出格式
+- 修改布局、增删组件、默认值、取色管线、导出格式、字体策略
+- 修改 `BLOB_PROFILES` 或对比度/导出 UX
 - 完成一轮产品决策（写入 §9）
-- 新增已知 bug / 限制（§10）
-- 勾选或新增 backlog（§11）
+- 新增已知 bug / 限制（§10）或 backlog（§11）
 
 **不必写进本文：** 一次性调试笔记、已 revert 的方案。
 
-**对外介绍 / PRD：** 可从 §0–§1、§5 摘要改写；技术细节以本文为准。
+**开新对话：** `@docs/PROJECT_REFERENCE.md`（必要时再 `@README.md`）。
 
 ---
 
-*迭代时优先读 §0、§5、§9、§10、§12。*
+*迭代时优先读 §0、§2、§5、§9、§10、§12。*

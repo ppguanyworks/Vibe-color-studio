@@ -35,7 +35,10 @@ export interface StudioState {
   speed: number
   luminance: number
   blobAnchors: [number, number][]
+  /** overlay content inside the phone frame — off gives a clean gradient plate */
+  showOverlay: boolean
 
+  toggleOverlay: () => void
   setInputMode: (mode: 'hex' | 'image') => void
   setHex: (hex: string) => void
   setSeedH: (h: number) => void
@@ -50,7 +53,7 @@ export interface StudioState {
 }
 
 export const useStudio = create<StudioState>((set, get) => ({
-  inputMode: 'image',
+  inputMode: 'hex',
   hex: DEFAULT_HEX,
   seedH: defaultSeed?.h ?? 255,
   seedC: defaultSeed?.c ?? 0.13,
@@ -66,6 +69,9 @@ export const useStudio = create<StudioState>((set, get) => ({
   speed: 1,
   luminance: 0,
   blobAnchors: DEFAULT_BLOB_ANCHORS.map((a) => [...a] as [number, number]),
+  showOverlay: true,
+
+  toggleOverlay: () => set((s) => ({ showOverlay: !s.showOverlay })),
 
   setInputMode: (mode) => set({ inputMode: mode, ...(mode === 'hex' ? { lastExtraction: null } : {}) }),
 

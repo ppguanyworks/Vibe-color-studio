@@ -1,22 +1,26 @@
+import type { ReactNode } from 'react'
 import type { AuroraResult } from '../color/aurora'
-import { LightnessTabs } from './LightnessTabs'
 import { PhonePreview } from './PhonePreview'
-import { PreviewStatusBar } from './PreviewStatusBar'
 
 interface PreviewStageProps {
   a: AuroraResult
   inputMode: 'hex' | 'image'
   imageUrl: string | null
+  showOverlay: boolean
+  toolbar: ReactNode
 }
 
-export function PreviewStage({ a, inputMode, imageUrl }: PreviewStageProps) {
+export function PreviewStage({ a, inputMode, imageUrl, showOverlay, toolbar }: PreviewStageProps) {
   return (
-    <div className="flex flex-col items-center gap-5 py-6 h-full">
-      <div className="flex flex-col items-center gap-2.5">
-        <LightnessTabs />
-        <PhonePreview a={a} inputMode={inputMode} imageUrl={imageUrl} />
+    <div className="relative flex-1 min-w-0 h-full overflow-hidden">
+      {/* safe centering keeps the frame fully visible on short viewports instead of clipping it */}
+      <div className="h-full flex flex-col items-center justify-center-safe overflow-y-auto scroll-thin px-8 pt-8 pb-28">
+        <div className="anim-rise phone-fit">
+          <PhonePreview a={a} inputMode={inputMode} imageUrl={imageUrl} showOverlay={showOverlay} />
+        </div>
       </div>
-      <PreviewStatusBar a={a} />
+
+      <div className="absolute left-1/2 -translate-x-1/2 bottom-6 z-10">{toolbar}</div>
     </div>
   )
 }

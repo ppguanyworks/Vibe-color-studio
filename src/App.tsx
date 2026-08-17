@@ -1,10 +1,21 @@
-import { useMemo } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useStudio } from './store/useStudio'
 import { generateAurora } from './color/aurora'
-import { InspectorPanel } from './components/InspectorPanel'
-import { BlobLayoutEditor } from './components/BlobLayoutEditor'
+import { LIGHTNESS_PRESETS } from './presets/lightness'
+import { downloadBackgroundPng } from './export/renderBackgroundImage'
+import { AppHeader } from './components/AppHeader'
+import { BottomToolbar } from './components/BottomToolbar'
+import { ExportModal } from './components/ExportModal'
+import { InspectorRail } from './components/InspectorRail'
 import { PreviewStage } from './components/PreviewStage'
-import { ExportDrawer } from './components/ExportDrawer'
+
+function isTypingTarget(el: EventTarget | null) {
+  return (
+    el instanceof HTMLInputElement ||
+    el instanceof HTMLTextAreaElement ||
+    (el instanceof HTMLElement && el.isContentEditable)
+  )
+}
 
 export default function App() {
   const seedH = useStudio((s) => s.seedH)
@@ -19,6 +30,11 @@ export default function App() {
   const speed = useStudio((s) => s.speed)
   const luminance = useStudio((s) => s.luminance)
   const blobAnchors = useStudio((s) => s.blobAnchors)
+  const showOverlay = useStudio((s) => s.showOverlay)
+  const setLightness = useStudio((s) => s.setLightness)
+
+  const [exportOpen, setExportOpen] = useState(false)
+  const [downloading, setDownloading] = useState(false)
 
   const aurora = useMemo(
     () =>
@@ -36,29 +52,70 @@ export default function App() {
     [seedH, seedC, anchorOklch, anchorHsl, lightnessId, richness, speed, luminance, blobAnchors],
   )
 
+  const downloadFrame = useCallback(async () => {
+    setDownloading(true)
+    try {
+      await downloadBackgroundPng(aurora)
+    } finally {
+      setDownloading(false)
+    }
+  }, [aurora])
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (isTypingTarget(e.target)) return
+
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'e') {
+        e.preventDefault()
+        setExportOpen(true)
+        return
+      }
+
+      if (exportOpen) return
+
+      if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+        e.preventDefault()
+        const i = LIGHTNESS_PRESETS.findIndex((p) => p.id === lightnessId)
+        const dir = e.key === 'ArrowRight' ? 1 : -1
+        const next = (i + dir + LIGHTNESS_PRESETS.length) % LIGHTNESS_PRESETS.length
+        setLightness(LIGHTNESS_PRESETS[next].id)
+      }
+    }
+
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [exportOpen, lightnessId, setLightness])
+
   return (
-    <div className="min-h-screen flex flex-col">
-      <header className="shrink-0 border-b border-white/8 px-6 py-4">
-        <div className="max-w-[1440px] mx-auto flex items-baseline gap-4 flex-wrap">
-          <h1 className="text-[15px] font-semibold text-white/90 m-0">Vibe Color Studio</h1>
-          <span className="text-[13px] text-white/40">动态渐变背景生成器</span>
-        </div>
-      </header>
+    <div className="h-screen flex flex-col overflow-hidden">
+      <AppHeader />
 
-      <div className="flex-1 max-w-[1440px] w-full mx-auto px-4 py-4 lg:px-6">
-        <div className="flex flex-col lg:flex-row lg:items-start gap-4">
-          <div className="shrink-0 w-full lg:w-[300px] flex flex-col gap-4">
-            <InspectorPanel />
-            <BlobLayoutEditor a={aurora} />
-          </div>
+      <main className="flex-1 min-h-0 flex">
+        <PreviewStage
+          a={aurora}
+          inputMode={inputMode}
+          imageUrl={imageUrl}
+          showOverlay={showOverlay}
+          toolbar={
+            <BottomToolbar
+              a={aurora}
+              downloading={downloading}
+              onDownloadFrame={downloadFrame}
+              onExportCode={() => setExportOpen(true)}
+            />
+          }
+        />
 
-          <div className="flex-1 min-w-0 flex flex-col">
-            <PreviewStage a={aurora} inputMode={inputMode} imageUrl={imageUrl} />
-          </div>
+        <InspectorRail a={aurora} onExportCode={() => setExportOpen(true)} />
+      </main>
 
-          <ExportDrawer a={aurora} extraction={inputMode === 'image' ? lastExtraction : null} />
-        </div>
-      </div>
+      {exportOpen && (
+        <ExportModal
+          a={aurora}
+          extraction={inputMode === 'image' ? lastExtraction : null}
+          onClose={() => setExportOpen(false)}
+        />
+      )}
     </div>
   )
 }

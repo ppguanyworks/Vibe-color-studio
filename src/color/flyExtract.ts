@@ -121,7 +121,7 @@ function applyFilterAndWeight(clusters: Cluster[], cfg: FlyExtractConfig): Clust
   const lightnessFactor = cfg.lightnessAddition / 100
 
   const raw: ClusterResult[] = clusters.map((cl) => {
-    let oklch = oklchFromOklab(cl.rep)
+    const oklch = oklchFromOklab(cl.rep)
     const ratio = cl.n / totalPixels
     const lightnessBoost = clamp(oklch.l, 0, 1)
     const compositeWeight = cl.n * (1 + lightnessFactor * lightnessBoost)

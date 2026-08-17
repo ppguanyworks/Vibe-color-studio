@@ -5,11 +5,12 @@ interface PhonePreviewProps {
   a: AuroraResult
   inputMode: 'hex' | 'image'
   imageUrl: string | null
+  showOverlay: boolean
 }
 
-export function PhonePreview({ a, inputMode, imageUrl }: PhonePreviewProps) {
-  const showImage = inputMode === 'image' && imageUrl
-  const showMockUi = inputMode === 'hex'
+export function PhonePreview({ a, inputMode, imageUrl, showOverlay }: PhonePreviewProps) {
+  const showImage = showOverlay && inputMode === 'image' && imageUrl
+  const showMockUi = showOverlay && inputMode === 'hex'
 
   return (
     <div

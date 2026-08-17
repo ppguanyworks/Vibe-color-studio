@@ -22,3 +22,9 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Proprietary / local-only fonts (TikTok Sans)
+public/fonts/*.ttf
+public/fonts/*.otf
+public/fonts/*.woff
+public/fonts/*.woff2

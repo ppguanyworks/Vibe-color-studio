@@ -2,7 +2,7 @@ import { useRef, useState, useEffect, useCallback, useMemo } from 'react'
 import { parse, formatHex } from 'culori'
 import { resolve } from '../color/oklch'
 import { useStudio } from '../store/useStudio'
-import { Panel, SectionDivider, SectionLabel, SegmentControl, Slider } from './ui'
+import { Section, SegmentControl, Slider } from './ui'
 
 function imageFromClipboard(data: DataTransfer | null): File | null {
   if (!data) return null
@@ -14,6 +14,18 @@ function imageFromClipboard(data: DataTransfer | null): File | null {
     }
   }
   return null
+}
+
+function MetaRow({ items }: { items: [string, string][] }) {
+  return (
+    <div className="flex items-center gap-3">
+      {items.map(([k, v]) => (
+        <span key={k} className="num text-[10.5px] text-[var(--ink-4)] leading-none">
+          <span className="text-[var(--ink-4)]">{k}</span> <span className="text-[var(--ink-3)]">{v}</span>
+        </span>
+      ))}
+    </div>
+  )
 }
 
 export function InspectorPanel() {
@@ -94,37 +106,47 @@ export function InspectorPanel() {
   const hasImageExtract = inputMode === 'image' && !!imageUrl && palette.length > 0
 
   return (
-    <Panel>
-      <SectionLabel>输入</SectionLabel>
+    <>
+      <Section label="输入">
+        <SegmentControl
+          value={inputMode}
+          onChange={setInputMode}
+          options={[
+            { id: 'hex', label: '色值 HEX' },
+            { id: 'image', label: '图片取色' },
+          ]}
+        />
 
-      <SegmentControl
-        value={inputMode}
-        onChange={setInputMode}
-        options={[
-          { id: 'image', label: '上传图片' },
-          { id: 'hex', label: '色值 HEX' },
-        ]}
-      />
-
-      <div className="mt-3">
         {inputMode === 'hex' ? (
-          <div className="flex items-center gap-2">
-            <span
-              className="w-9 h-9 rounded-[8px] border border-white/15 shrink-0"
-              style={{ background: parsedDraft ? hexMainColor : '#000' }}
-            />
-            <input
-              value={draft}
-              onChange={(e) => commitHex(e.target.value.trim())}
-              placeholder="#4A6CF7"
-              spellCheck={false}
-              className="flex-1 min-w-0 bg-white/[0.04] border border-white/10 rounded-[8px] px-3 py-2 text-[13px] font-mono text-white/90 outline-none focus:border-white/25"
+          <div className="mt-3.5 flex flex-col gap-2.5">
+            <div className="flex items-center gap-2">
+              <span
+                className="w-9 h-9 rounded-[var(--r-sm)] border border-[var(--line-2)] shrink-0"
+                style={{ background: parsedDraft ? hexMainColor : '#000' }}
+                aria-hidden
+              />
+              <input
+                value={draft}
+                onChange={(e) => commitHex(e.target.value.trim())}
+                placeholder="#4A6CF7"
+                spellCheck={false}
+                aria-label="主色 HEX"
+                className="num flex-1 min-w-0 h-9 px-3 rounded-[var(--r-sm)] border border-[var(--line)] bg-white/[0.02] text-[13px] font-semibold tracking-[0.02em] text-[var(--ink)] outline-none transition-colors focus:border-[var(--line-3)] focus:bg-white/[0.04]"
+              />
+            </div>
+            <MetaRow
+              items={[
+                ['H', `${Math.round(seedH)}°`],
+                ['C', seedC.toFixed(3)],
+              ]}
             />
           </div>
         ) : (
-          <>
+          <div className="mt-3.5 flex flex-col gap-4">
             <div
               tabIndex={0}
+              role="button"
+              aria-label="上传图片"
               onClick={() => fileRef.current?.click()}
               onPaste={(e) => {
                 if (pasteImage(e.clipboardData)) e.preventDefault()
@@ -139,167 +161,148 @@ export function InspectorPanel() {
                 setDragOver(false)
                 onFiles(e.dataTransfer.files)
               }}
-              className={`rounded-[10px] border border-dashed cursor-pointer transition-colors outline-none focus-visible:border-white/35 focus-visible:bg-white/[0.04] ${
-                dragOver ? 'border-white/35 bg-white/[0.05]' : 'border-white/12 bg-white/[0.02] hover:bg-white/[0.04]'
+              className={`rounded-[var(--r-md)] border border-dashed cursor-pointer overflow-hidden transition-colors ${
+                dragOver
+                  ? 'border-[var(--line-3)] bg-white/[0.05]'
+                  : 'border-[var(--line-2)] bg-white/[0.015] hover:bg-white/[0.04]'
               }`}
             >
               {imageUrl ? (
-                <img src={imageUrl} alt="source" className="w-full h-auto block rounded-[8px]" />
+                <img src={imageUrl} alt="来源图片" className="w-full h-auto block" />
               ) : (
-                <div className="h-24 flex items-center justify-center text-[12px] text-white/40 px-4 text-center">
-                  拖拽、点击或 ⌘V 粘贴图片
+                <div className="h-[88px] grid place-items-center px-4 text-center">
+                  <span className="text-[11.5px] text-[var(--ink-3)] leading-relaxed">
+                    拖拽 · 点击 · ⌘V 粘贴图片
+                  </span>
                 </div>
               )}
             </div>
             <input ref={fileRef} type="file" accept="image/*" hidden onChange={(e) => onFiles(e.target.files)} />
 
-            <div className="mt-3">
-              <Slider
-                label="合并相似色"
-                value={mergeSimilar}
-                min={0}
-                max={1}
-                step={0.02}
-                onChange={setMerge}
-                display={Math.round(mergeSimilar * 10).toString()}
-                leftHint="容差 0 · 保留更多色"
-                rightHint="容差 10 · 主色更稳"
-              />
-              <p className="mt-1 text-[10px] text-white/40 leading-snug">
-                Fly colorMergingTolerance · 当前 {Math.round(mergeSimilar * 10)}
-              </p>
-            </div>
+            <Slider
+              label="合并相似色"
+              value={mergeSimilar}
+              min={0}
+              max={1}
+              step={0.02}
+              onChange={setMerge}
+              display={Math.round(mergeSimilar * 10).toString()}
+              hint="Fly colorMergingTolerance · 0 保留更多色，10 主色更稳"
+            />
 
-            <div className="mt-4 rounded-[10px] border border-white/10 bg-white/[0.03] p-3">
-              <div className="flex items-center justify-between gap-2 mb-2.5">
-                <span className="text-[11px] font-medium text-white/70">提取主色</span>
+            <div className="pt-4 border-t border-[var(--line)]">
+              <div className="flex items-center justify-between gap-3 mb-3">
+                <span className="micro">提取结果</span>
                 {hasImageExtract && lastExtraction && (
-                  <span className="text-[10px] font-mono text-white/40 tabular-nums">
+                  <span className="num text-[10px] text-[var(--ink-4)]">
                     容差 {lastExtraction.meta.colorMergingTolerance}
                   </span>
                 )}
               </div>
 
               {hasImageExtract ? (
-                <>
+                <div className="flex flex-col gap-3">
                   <div className="flex items-center gap-3">
                     <span
-                      className="w-11 h-11 rounded-[10px] border border-white/15 shrink-0 shadow-[inset_0_0_0_1px_rgba(0,0,0,0.12)]"
+                      className="w-9 h-9 rounded-[var(--r-sm)] border border-[var(--line-2)] shrink-0"
                       style={{ background: displayMainHex }}
                       aria-hidden
                     />
-                    <div className="min-w-0 flex-1">
-                      <p className="text-[13px] font-mono font-medium text-white/90 tracking-wide truncate">
+                    <div className="min-w-0 flex-1 flex flex-col gap-1.5">
+                      <span className="num text-[13px] font-semibold tracking-[0.02em] text-[var(--ink)] leading-none truncate">
                         {displayMainHex}
-                      </p>
-                      <p className="mt-0.5 text-[11px] text-white/50 tabular-nums">
-                        HSL H {Math.round(seedH)}° · C {seedC.toFixed(3)}
-                      </p>
+                      </span>
+                      <MetaRow
+                        items={[
+                          ['H', `${Math.round(seedH)}°`],
+                          ['C', seedC.toFixed(3)],
+                        ]}
+                      />
                     </div>
                   </div>
 
-                  <div className="mt-3 pt-3 border-t border-white/8">
-                    <p className="text-[10px] text-white/45 mb-2">色板 · {palette.length} 色</p>
-                    <div className="flex gap-1">
-                      {palette.map((s, i) => (
-                        <button
-                          key={s.hex}
-                          type="button"
-                          title={`${s.hex} · ${Math.round(s.weight * 100)}%`}
-                          aria-label={i === 0 ? `主色 ${s.hex}` : `色板 ${i + 1} ${s.hex}`}
-                          aria-current={i === 0 ? 'true' : undefined}
-                          className={`relative flex-1 h-6 rounded-[6px] border transition-opacity ${
-                            i === 0 ? 'border-white/30 ring-1 ring-white/15' : 'border-white/10 hover:opacity-90'
-                          }`}
-                          style={{ background: s.hex }}
-                        />
-                      ))}
-                    </div>
+                  <div className="flex gap-1">
+                    {palette.map((s, i) => (
+                      <button
+                        key={s.hex}
+                        type="button"
+                        title={`${s.hex} · ${Math.round(s.weight * 100)}%`}
+                        aria-label={i === 0 ? `主色 ${s.hex}` : `色板 ${i + 1} ${s.hex}`}
+                        aria-current={i === 0 ? 'true' : undefined}
+                        className={`flex-1 h-6 rounded-[var(--r-xs)] border transition-transform hover:scale-y-110 ${
+                          i === 0 ? 'border-white/35' : 'border-[var(--line-2)]'
+                        }`}
+                        style={{ background: s.hex }}
+                      />
+                    ))}
                   </div>
-                </>
+                </div>
               ) : (
-                <p className="text-[11px] text-white/40 leading-snug py-1">
-                  上传图片后，Fly 管线会在此显示提取主色与色板
+                <p className="text-[11.5px] text-[var(--ink-4)] leading-relaxed m-0">
+                  上传后在此显示主色与 5 色色板
                 </p>
               )}
             </div>
-          </>
-        )}
-      </div>
-
-      {inputMode === 'hex' && (
-        <div className="mt-3 rounded-[10px] border border-white/10 bg-white/[0.03] px-3 py-2.5">
-          <div className="flex items-center gap-3">
-            <span
-              className="w-9 h-9 rounded-[8px] border border-white/15 shrink-0"
-              style={{ background: parsedDraft ? displayMainHex : '#000' }}
-              aria-hidden
-            />
-            <div className="min-w-0 flex-1">
-              <p className="text-[11px] font-medium text-white/70">输入主色</p>
-              <p className="mt-0.5 text-[11px] font-mono text-white/85 truncate">{displayMainHex}</p>
-            </div>
-            <p className="text-[11px] font-mono text-white/45 tabular-nums shrink-0">
-              H {Math.round(seedH)}° · C {seedC.toFixed(3)}
-            </p>
           </div>
-        </div>
-      )}
-
-      <SectionDivider />
-
-      <SectionLabel>渐变参数</SectionLabel>
-
-      <div className="flex flex-col gap-4">
-        <Slider
-          label="丰富度"
-          value={richness}
-          min={0}
-          max={1}
-          step={0.01}
-          onChange={setRichness}
-          display={Math.round(richness * 100) + '%'}
-          leftHint="同色系"
-          rightHint="色相+纯度拉开"
-        />
-
-        <Slider
-          label="整体明度"
-          value={luminance}
-          min={-1}
-          max={1}
-          step={0.02}
-          onChange={setLuminance}
-          display={luminance === 0 ? '0' : (luminance > 0 ? '+' : '') + luminance.toFixed(2).replace(/0$/, '').replace(/\.$/, '')}
-          leftHint="−1 更暗"
-          rightHint="+1 更亮"
-        />
-
-        <Slider
-          label="流动速度"
-          value={speed}
-          min={0.25}
-          max={2.5}
-          step={0.05}
-          onChange={setSpeed}
-          display={speed.toFixed(2).replace(/0$/, '') + '×'}
-          leftHint="慢"
-          rightHint="快"
-        />
-
-        {inputMode === 'hex' && (
-          <Slider
-            label="主色相 H (HSL)"
-            value={seedH}
-            min={0}
-            max={360}
-            step={1}
-            onChange={setSeedH}
-            display={Math.round(seedH) + '°'}
-            hue
-          />
         )}
-      </div>
-    </Panel>
+      </Section>
+
+      <div className="h-px bg-[var(--line)]" />
+
+      <Section label="渐变">
+        <div className="flex flex-col gap-4">
+          <Slider
+            label="丰富度"
+            value={richness}
+            min={0}
+            max={1}
+            step={0.01}
+            onChange={setRichness}
+            display={Math.round(richness * 100) + '%'}
+            hint="0 同色系，100% 色相与纯度拉开"
+          />
+
+          <Slider
+            label="整体明度"
+            value={luminance}
+            min={-1}
+            max={1}
+            step={0.02}
+            onChange={setLuminance}
+            display={
+              luminance === 0
+                ? '0'
+                : (luminance > 0 ? '+' : '') + luminance.toFixed(2).replace(/0$/, '').replace(/\.$/, '')
+            }
+            hint="−1 更暗，+1 更亮"
+          />
+
+          <Slider
+            label="流动速度"
+            value={speed}
+            min={0.25}
+            max={2.5}
+            step={0.05}
+            onChange={setSpeed}
+            display={speed.toFixed(2).replace(/0$/, '') + '×'}
+            hint="动画整体节奏倍率"
+          />
+
+          {inputMode === 'hex' && (
+            <Slider
+              label="主色相"
+              value={seedH}
+              min={0}
+              max={360}
+              step={1}
+              onChange={setSeedH}
+              display={Math.round(seedH) + '°'}
+              hint="HSL 色相，与设计工具口径一致"
+              hue
+            />
+          )}
+        </div>
+      </Section>
+    </>
   )
 }

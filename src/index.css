@@ -1,46 +1,113 @@
+@import "@fontsource-variable/urbanist";
 @import "tailwindcss";
+@import "./styles/aurora-keyframes.css";
+
+/* Phone-mock only — keep TUX preview on TikTok Sans, rest of chrome stays Urbanist. */
+@font-face{
+  font-family:"TikTok Sans";
+  src:url("/fonts/TikTokSans-VF.ttf") format("truetype");
+  font-weight:100 900;
+  font-style:normal;
+  font-display:swap;
+}
 
 :root{
-  --bg: #07080c;
-  --surface: rgba(255,255,255,0.038);
-  --surface-2: rgba(255,255,255,0.06);
-  --border: rgba(255,255,255,0.09);
-  --border-strong: rgba(255,255,255,0.16);
-  --hi: rgba(255,255,255,0.94);
-  --mid: rgba(255,255,255,0.62);
-  --lo: rgba(255,255,255,0.40);
-  --dim: rgba(255,255,255,0.26);
+  /* surfaces */
+  --bg: #08080a;
+  --bg-rail: #0a0a0d;
+  --bg-elev: #101014;
+  --bg-float: rgba(20,20,25,0.72);
+
+  /* hairlines — order comes from 1px, never from heavy strokes */
+  --line: rgba(255,255,255,0.07);
+  --line-2: rgba(255,255,255,0.12);
+  --line-3: rgba(255,255,255,0.20);
+
+  /* ink */
+  --ink: rgba(255,255,255,0.94);
+  --ink-2: rgba(255,255,255,0.56);
+  --ink-3: rgba(255,255,255,0.38);
+  --ink-4: rgba(255,255,255,0.24);
+
+  /* radii */
+  --r-xs: 6px;
+  --r-sm: 8px;
+  --r-md: 10px;
+  --r-lg: 14px;
+  --r-xl: 18px;
+
+  --sans: "Urbanist Variable", "Urbanist", -apple-system, BlinkMacSystemFont,
+    "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  --tiktok: "TikTok Sans", -apple-system, BlinkMacSystemFont, "PingFang SC",
+    "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
   --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
-  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
 }
 
 *{ box-sizing:border-box; }
-html,body,#root{ margin:0; padding:0; min-height:100%; }
+html,body,#root{ margin:0; padding:0; height:100%; }
+
 body{
   font-family:var(--sans);
-  color:var(--hi);
+  font-synthesis-weight:none;
+  color:var(--ink);
   background:var(--bg);
   -webkit-font-smoothing:antialiased;
   text-rendering:optimizeLegibility;
+  font-variant-numeric:tabular-nums;
+  overflow:hidden;
+}
+
+/* Numerals in this UI are read as measurements — keep them from shifting. */
+.num{ font-variant-numeric:tabular-nums; letter-spacing:0.01em; }
+
+.micro{
+  font-size:9px;
+  line-height:1;
+  font-weight:600;
+  letter-spacing:0.16em;
+  text-transform:uppercase;
+  color:var(--ink-3);
+}
+
+.glass{
+  background:var(--bg-float);
+  backdrop-filter:blur(20px) saturate(160%);
+  -webkit-backdrop-filter:blur(20px) saturate(160%);
+}
+
+:focus-visible{
+  outline:none;
+  box-shadow:0 0 0 1px var(--bg), 0 0 0 3px rgba(255,255,255,0.30);
 }
 
 /* ---------- range sliders ---------- */
 .slider{
-  -webkit-appearance:none; appearance:none; width:100%; height:4px; border-radius:4px;
-  background:rgba(255,255,255,0.13); outline:none; cursor:pointer;
+  -webkit-appearance:none; appearance:none; width:100%; height:3px; border-radius:999px;
+  background:rgba(255,255,255,0.14); outline:none; cursor:pointer;
 }
 .slider::-webkit-slider-thumb{
-  -webkit-appearance:none; appearance:none; width:15px; height:15px; border-radius:50%;
-  background:#fff; border:none; box-shadow:0 1px 6px rgba(0,0,0,.5); transition:transform .12s;
+  -webkit-appearance:none; appearance:none; width:12px; height:12px; border-radius:50%;
+  background:#fff; border:none;
+  box-shadow:0 0 0 1px rgba(0,0,0,0.35), 0 2px 6px rgba(0,0,0,0.55);
+  transition:transform .14s cubic-bezier(.2,.8,.2,1);
 }
-.slider::-webkit-slider-thumb:hover{ transform:scale(1.18); }
+.slider:hover::-webkit-slider-thumb{ transform:scale(1.15); }
+.slider:active::-webkit-slider-thumb{ transform:scale(1.02); }
+.slider::-moz-range-thumb{
+  width:12px; height:12px; border-radius:50%; background:#fff; border:none;
+}
 .slider.hue-track{ background:linear-gradient(90deg,
-  hsl(0 75% 60%),hsl(60 75% 60%),hsl(120 75% 60%),hsl(180 75% 60%),
-  hsl(240 75% 60%),hsl(300 75% 60%),hsl(360 75% 60%)); }
+  hsl(0 72% 58%),hsl(60 72% 58%),hsl(120 72% 58%),hsl(180 72% 58%),
+  hsl(240 72% 58%),hsl(300 72% 58%),hsl(360 72% 58%)); }
+
+/* ---------- phone mock (TUX / TikTok Sans) ---------- */
+.phone-mock{
+  font-family:var(--tiktok);
+  font-synthesis:none;
+  -webkit-font-smoothing:antialiased;
+}
 
 /* ---------- aurora blobs ---------- */
-@import "./styles/aurora-keyframes.css";
-
 .aurora-bg{ position:absolute; inset:0; overflow:hidden; }
 .aurora-blob{
   position:absolute; border-radius:50%;
@@ -48,8 +115,41 @@ body{
   animation-timing-function: cubic-bezier(0.45, 0.05, 0.55, 0.95);
 }
 
-/* hide native number spinners not needed */
-.codeblock{ font-family:var(--mono); font-size:11px; line-height:1.55; white-space:pre;
-  overflow:auto; }
-.codeblock::-webkit-scrollbar{ width:8px; height:8px; }
-.codeblock::-webkit-scrollbar-thumb{ background:rgba(255,255,255,.14); border-radius:4px; }
+/* ---------- code ---------- */
+.codeblock{
+  font-family:var(--mono); font-size:11px; line-height:1.6;
+  white-space:pre; overflow:auto; font-variant-ligatures:none;
+}
+
+/* ---------- scrollbars ---------- */
+.scroll-thin{ scrollbar-width:thin; scrollbar-color:rgba(255,255,255,.16) transparent; }
+.scroll-thin::-webkit-scrollbar{ width:9px; height:9px; }
+.scroll-thin::-webkit-scrollbar-track{ background:transparent; }
+.scroll-thin::-webkit-scrollbar-thumb{
+  background:rgba(255,255,255,.14); border-radius:999px;
+  border:3px solid transparent; background-clip:content-box;
+}
+.scroll-thin::-webkit-scrollbar-thumb:hover{ background:rgba(255,255,255,.24); background-clip:content-box; }
+
+/* ---------- preview fit ----------
+   The phone frame is a fixed 268×552 canvas. On short viewports it would be
+   clipped by the stage and collide with the floating toolbar, so scale it down
+   from the top edge instead of reflowing the mock UI inside it. */
+.phone-fit{ transform-origin: top center; }
+@media (max-height: 760px){ .phone-fit{ scale: 0.93; } }
+@media (max-height: 700px){ .phone-fit{ scale: 0.86; } }
+@media (max-height: 640px){ .phone-fit{ scale: 0.78; } }
+@media (max-height: 580px){ .phone-fit{ scale: 0.68; } }
+@media (max-height: 520px){ .phone-fit{ scale: 0.58; } }
+
+/* ---------- entrance ---------- */
+@keyframes rise{ from{ opacity:0; transform:translateY(6px); } to{ opacity:1; transform:none; } }
+@keyframes fade{ from{ opacity:0; } to{ opacity:1; } }
+@keyframes pop{ from{ opacity:0; transform:translateY(8px) scale(.985); } to{ opacity:1; transform:none; } }
+.anim-rise{ animation:rise .5s cubic-bezier(.2,.8,.2,1) both; }
+.anim-fade{ animation:fade .2s ease both; }
+.anim-pop{ animation:pop .24s cubic-bezier(.2,.8,.2,1) both; }
+
+@media (prefers-reduced-motion: reduce){
+  .anim-rise, .anim-fade, .anim-pop{ animation:none; }
+}
