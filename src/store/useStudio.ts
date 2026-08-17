@@ -2,47 +2,52 @@ import { create } from 'zustand'
 import type { LightnessId } from '../presets/lightness'
 import type { OKLCH } from '../color/oklch'
 import { DEFAULT_BLOB_ANCHORS } from '../color/blobLayout'
-import { anchorHslFromOklch, displayHueFromOklch, hexWithHslHue, oklchHueFromHsl, seedFromHex, type AnchorHsl } from '../color/seedColor'
-import { extractFromImage, type Extraction, type Swatch } from '../color/quantize'
+import { hexWithHslHue, oklchHueFromHsl, seedFromHex, type AnchorHsl } from '../color/seedColor'
+import { extractPosterColor, type PosterExtractResult } from '../color/posterExtract'
+import { titleFromFilename } from '../color/imageTitle'
+import type { Locale } from '../i18n'
 
 const DEFAULT_HEX = '#4A6CF7'
 const defaultSeed = seedFromHex(DEFAULT_HEX)
+const LOCALE_KEY = 'vibe-locale'
 
-function applyExtractedMain(main: OKLCH) {
-  return {
-    seedH: displayHueFromOklch(main),
-    seedC: Math.max(main.c, 0.05),
-    anchorOklch: { l: main.l, c: Math.max(main.c, 0.05), h: main.h },
-    anchorHsl: anchorHslFromOklch(main),
+function readLocale(): Locale {
+  try {
+    const v = localStorage.getItem(LOCALE_KEY)
+    if (v === 'en' || v === 'zh') return v
+  } catch {
+    /* ignore */
   }
+  return 'zh'
 }
 
 export interface StudioState {
+  locale: Locale
   inputMode: 'hex' | 'image'
+
   hex: string
-  /** HSL hue — matches Figma / design-tool H sliders */
   seedH: number
   seedC: number
   anchorOklch: OKLCH
   anchorHsl: AnchorHsl
-  palette: Swatch[]
-  imageUrl: string | null
-  imageFile: File | null
-  mergeSimilar: number
-  lastExtraction: Extraction | null
   lightnessId: LightnessId
   richness: number
   speed: number
   luminance: number
   blobAnchors: [number, number][]
-  /** overlay content inside the phone frame — off gives a clean gradient plate */
   showOverlay: boolean
 
+  imageUrl: string | null
+  imageFile: File | null
+  imageTitle: string | null
+  posterColor: PosterExtractResult | null
+  extracting: boolean
+
+  setLocale: (locale: Locale) => void
   toggleOverlay: () => void
   setInputMode: (mode: 'hex' | 'image') => void
   setHex: (hex: string) => void
   setSeedH: (h: number) => void
-  setMerge: (v: number) => void
   setLightness: (id: LightnessId) => void
   setRichness: (v: number) => void
   setSpeed: (v: number) => void
@@ -53,17 +58,14 @@ export interface StudioState {
 }
 
 export const useStudio = create<StudioState>((set, get) => ({
+  locale: readLocale(),
   inputMode: 'hex',
+
   hex: DEFAULT_HEX,
   seedH: defaultSeed?.h ?? 255,
   seedC: defaultSeed?.c ?? 0.13,
   anchorOklch: defaultSeed?.anchor ?? { l: 0.5, c: 0.13, h: 255 },
   anchorHsl: defaultSeed?.anchorHsl ?? { h: 255, s: 0.5, l: 0.5 },
-  palette: [],
-  imageUrl: null,
-  imageFile: null,
-  mergeSimilar: 0.4,
-  lastExtraction: null,
   lightnessId: 'dark',
   richness: 0.4,
   speed: 1,
@@ -71,9 +73,24 @@ export const useStudio = create<StudioState>((set, get) => ({
   blobAnchors: DEFAULT_BLOB_ANCHORS.map((a) => [...a] as [number, number]),
   showOverlay: true,
 
+  imageUrl: null,
+  imageFile: null,
+  imageTitle: null,
+  posterColor: null,
+  extracting: false,
+
+  setLocale: (locale) => {
+    try {
+      localStorage.setItem(LOCALE_KEY, locale)
+    } catch {
+      /* ignore */
+    }
+    set({ locale })
+  },
+
   toggleOverlay: () => set((s) => ({ showOverlay: !s.showOverlay })),
 
-  setInputMode: (mode) => set({ inputMode: mode, ...(mode === 'hex' ? { lastExtraction: null } : {}) }),
+  setInputMode: (mode) => set({ inputMode: mode }),
 
   setHex: (hex) => {
     const s = seedFromHex(hex)
@@ -85,18 +102,14 @@ export const useStudio = create<StudioState>((set, get) => ({
   },
 
   setSeedH: (h) => {
-    const { hex, inputMode, anchorOklch, anchorHsl } = get()
-    if (inputMode !== 'hex') {
+    const { hex, anchorOklch, anchorHsl } = get()
+    const next = hexWithHslHue(hex, h)
+    if (!next) {
       set({
         seedH: h,
         anchorHsl: { ...anchorHsl, h },
         anchorOklch: { ...anchorOklch, h: oklchHueFromHsl(h, { ...anchorHsl, h }) },
       })
-      return
-    }
-    const next = hexWithHslHue(hex, h)
-    if (!next) {
-      set({ seedH: h })
       return
     }
     set({
@@ -121,30 +134,23 @@ export const useStudio = create<StudioState>((set, get) => ({
   resetBlobAnchors: () =>
     set({ blobAnchors: DEFAULT_BLOB_ANCHORS.map((a) => [...a] as [number, number]) }),
 
-  setMerge: async (v) => {
-    set({ mergeSimilar: v })
-    const f = get().imageFile
-    if (f) {
-      const ex = await extractFromImage(f, v)
-      set({
-        palette: ex.palette,
-        ...applyExtractedMain(ex.main),
-        lastExtraction: ex,
-      })
-    }
-  },
-
   loadImage: async (file) => {
     const prev = get().imageUrl
     if (prev) URL.revokeObjectURL(prev)
     const url = URL.createObjectURL(file)
-    const ex = await extractFromImage(file, get().mergeSimilar)
     set({
       imageUrl: url,
       imageFile: file,
-      palette: ex.palette,
-      ...applyExtractedMain(ex.main),
-      lastExtraction: ex,
+      imageTitle: titleFromFilename(file.name),
+      extracting: true,
     })
+    try {
+      const posterColor = await extractPosterColor(file)
+      if (get().imageFile !== file) return
+      set({ posterColor, extracting: false })
+    } catch {
+      if (get().imageFile !== file) return
+      set({ posterColor: null, extracting: false })
+    }
   },
 }))

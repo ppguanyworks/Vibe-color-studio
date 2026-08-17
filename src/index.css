@@ -29,17 +29,19 @@
   --ink-3: rgba(255,255,255,0.38);
   --ink-4: rgba(255,255,255,0.24);
 
-  /* radii */
+  /* radii — Figma corner smoothing 60% ≈ CSS superellipse(1.6) */
   --r-xs: 6px;
   --r-sm: 8px;
   --r-md: 10px;
   --r-lg: 14px;
   --r-xl: 18px;
+  --corner-n: 1.6;
 
   --sans: "Urbanist Variable", "Urbanist", -apple-system, BlinkMacSystemFont,
     "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
-  --tiktok: "TikTok Sans", -apple-system, BlinkMacSystemFont, "PingFang SC",
-    "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  --tiktok: "TikTok Sans", "Urbanist Variable", "Urbanist", -apple-system,
+    BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei",
+    sans-serif;
   --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
 }
 
@@ -67,6 +69,20 @@ body{
   letter-spacing:0.16em;
   text-transform:uppercase;
   color:var(--ink-3);
+}
+
+/* Figma 60% corner smoothing. Unsupported browsers keep circular border-radius. */
+.smooth-r{
+  corner-shape: superellipse(var(--corner-n));
+}
+
+.color-swatch{
+  width:36px;
+  height:36px;
+  flex-shrink:0;
+  border-radius:var(--r-sm);
+  border:1px solid var(--line-2);
+  corner-shape: superellipse(var(--corner-n));
 }
 
 .glass{

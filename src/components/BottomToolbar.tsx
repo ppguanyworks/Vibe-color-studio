@@ -2,7 +2,8 @@ import type { ReactNode } from 'react'
 import type { AuroraResult } from '../color/aurora'
 import { LIGHTNESS_PRESETS, type LightnessId } from '../presets/lightness'
 import { useStudio } from '../store/useStudio'
-import { ContrastChip } from './ContrastChip'
+import { useT } from '../i18n'
+import { ContrastChip, WhiteContrastChip } from './ContrastChip'
 import { ChevronLeft, ChevronRight, Code, Download, Eye, EyeOff } from './icons'
 
 function Sep() {
@@ -29,37 +30,10 @@ function ToolButton({
       title={title}
       aria-label={label}
       disabled={disabled}
-      className="inline-flex shrink-0 items-center gap-2 h-8 px-2.5 rounded-[var(--r-sm)] text-[12px] font-medium whitespace-nowrap text-[var(--ink-2)] hover:text-[var(--ink)] hover:bg-white/[0.07] disabled:opacity-40 disabled:cursor-wait transition-colors"
+      className="inline-flex shrink-0 items-center gap-2 h-8 px-2.5 rounded-[var(--r-sm)] smooth-r text-[12px] font-medium whitespace-nowrap text-[var(--ink-2)] hover:text-[var(--ink)] hover:bg-white/[0.07] disabled:opacity-40 disabled:cursor-wait transition-colors"
     >
       <span className="text-[var(--ink-3)]">{icon}</span>
       <span className="hidden lg:inline">{label}</span>
-    </button>
-  )
-}
-
-function IconToggle({
-  on,
-  onClick,
-  title,
-}: {
-  on: boolean
-  onClick: () => void
-  title: string
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      title={title}
-      aria-label={title}
-      aria-pressed={!on}
-      className={`grid shrink-0 place-items-center w-8 h-8 rounded-[var(--r-sm)] transition-colors ${
-        on
-          ? 'text-[var(--ink-3)] hover:text-[var(--ink)] hover:bg-white/[0.07]'
-          : 'text-[var(--ink)] bg-white/[0.10]'
-      }`}
-    >
-      {on ? <Eye size={15} /> : <EyeOff size={15} />}
     </button>
   )
 }
@@ -72,10 +46,14 @@ interface BottomToolbarProps {
 }
 
 export function BottomToolbar({ a, downloading, onDownloadFrame, onExportCode }: BottomToolbarProps) {
+  const t = useT()
+  const inputMode = useStudio((s) => s.inputMode)
   const lightnessId = useStudio((s) => s.lightnessId)
   const setLightness = useStudio((s) => s.setLightness)
   const showOverlay = useStudio((s) => s.showOverlay)
   const toggleOverlay = useStudio((s) => s.toggleOverlay)
+  const posterColor = useStudio((s) => s.posterColor)
+  const isHex = inputMode === 'hex'
 
   const index = LIGHTNESS_PRESETS.findIndex((p) => p.id === lightnessId)
   const preset = LIGHTNESS_PRESETS[index] ?? LIGHTNESS_PRESETS[0]
@@ -87,59 +65,78 @@ export function BottomToolbar({ a, downloading, onDownloadFrame, onExportCode }:
 
   return (
     <div className="flex items-center gap-1.5 h-13 pl-2 pr-2 py-2 rounded-full glass border border-[var(--line-2)] shadow-[0_24px_60px_-20px_rgba(0,0,0,0.85)]">
-      <button
-        type="button"
-        onClick={() => step(-1)}
-        title="上一个模式（←）"
-        className="grid shrink-0 place-items-center w-8 h-8 rounded-full text-[var(--ink-3)] hover:text-[var(--ink)] hover:bg-white/[0.07] transition-colors"
-      >
-        <ChevronLeft size={15} />
-      </button>
+      {isHex && (
+        <>
+          <button
+            type="button"
+            onClick={() => step(-1)}
+            title={t('prevMode')}
+            className="grid shrink-0 place-items-center w-8 h-8 rounded-full text-[var(--ink-3)] hover:text-[var(--ink)] hover:bg-white/[0.07] transition-colors"
+          >
+            <ChevronLeft size={15} />
+          </button>
 
-      <span className="shrink-0 w-[84px] text-center text-[12.5px] font-semibold tracking-[-0.01em] text-[var(--ink)] whitespace-nowrap select-none">
-        {preset.label.replace(' mode', '')}
-      </span>
+          <span className="shrink-0 w-[84px] text-center text-[12.5px] font-semibold tracking-[-0.01em] text-[var(--ink)] whitespace-nowrap select-none">
+            {preset.id === 'dark' ? t('dark') : t('light')}
+          </span>
 
-      <button
-        type="button"
-        onClick={() => step(1)}
-        title="下一个模式（→）"
-        className="grid shrink-0 place-items-center w-8 h-8 rounded-full text-[var(--ink-3)] hover:text-[var(--ink)] hover:bg-white/[0.07] transition-colors"
-      >
-        <ChevronRight size={15} />
-      </button>
+          <button
+            type="button"
+            onClick={() => step(1)}
+            title={t('nextMode')}
+            className="grid shrink-0 place-items-center w-8 h-8 rounded-full text-[var(--ink-3)] hover:text-[var(--ink)] hover:bg-white/[0.07] transition-colors"
+          >
+            <ChevronRight size={15} />
+          </button>
 
-      <Sep />
+          <Sep />
+        </>
+      )}
 
       <ToolButton
         icon={<Download size={15} />}
-        label={downloading ? '生成中' : '当前帧'}
+        label={downloading ? t('generating') : t('frame')}
         onClick={onDownloadFrame}
-        title="下载当前一帧 PNG"
+        title={t('frame')}
         disabled={downloading}
       />
 
-      <ToolButton
-        icon={<Code size={15} />}
-        label="导出代码"
-        onClick={onExportCode}
-        title="导出 CSS / JSON（⌘E）"
-      />
+      {isHex && (
+        <ToolButton
+          icon={<Code size={15} />}
+          label={t('exportCode')}
+          onClick={onExportCode}
+          title={`${t('exportCode')} (⌘E)`}
+        />
+      )}
 
       <span className="hidden md:flex shrink-0 items-center gap-1.5">
         <Sep />
         <div className="px-1.5">
-          <ContrastChip a={a} />
+          {isHex ? (
+            <ContrastChip a={a} />
+          ) : posterColor ? (
+            <WhiteContrastChip ratio={posterColor.contrast} label={t('contrastWhite')} />
+          ) : null}
         </div>
       </span>
 
       <Sep />
 
-      <IconToggle
-        on={showOverlay}
+      <button
+        type="button"
         onClick={toggleOverlay}
-        title={showOverlay ? '隐藏预览内容' : '显示预览内容'}
-      />
+        title={showOverlay ? t('hideOverlay') : t('showOverlay')}
+        aria-label={showOverlay ? t('hideOverlay') : t('showOverlay')}
+        aria-pressed={!showOverlay}
+        className={`grid shrink-0 place-items-center w-8 h-8 rounded-[var(--r-sm)] transition-colors ${
+          showOverlay
+            ? 'text-[var(--ink-3)] hover:text-[var(--ink)] hover:bg-white/[0.07]'
+            : 'text-[var(--ink)] bg-white/[0.10]'
+        }`}
+      >
+        {showOverlay ? <Eye size={15} /> : <EyeOff size={15} />}
+      </button>
     </div>
   )
 }

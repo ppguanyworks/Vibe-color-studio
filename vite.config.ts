@@ -6,4 +6,9 @@ import tailwindcss from '@tailwindcss/vite'
 export default defineConfig({
   base: process.env.GITHUB_ACTIONS ? '/Vibe-color-studio/' : '/',
   plugins: [react(), tailwindcss()],
+  server: {
+    host: 'localhost',
+    port: 5173,
+    strictPort: true,
+  },
 })

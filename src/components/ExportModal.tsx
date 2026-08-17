@@ -1,36 +1,29 @@
 import { useMemo, useState } from 'react'
 import type { AuroraResult } from '../color/aurora'
-import type { Extraction } from '../color/quantize'
 import { generateExport, type ExportFormat } from '../export/generators'
+import { useT } from '../i18n'
 import { Modal } from './ui'
 import { Check, Copy } from './icons'
 
-const TABS: { id: ExportFormat; label: string; hint: string }[] = [
-  { id: 'css', label: 'CSS', hint: 'HTML + CSS · 含动画' },
-  { id: 'static', label: '静态', hint: '单层 background-image 快照' },
-  { id: 'json', label: 'JSON', hint: '设计 token · 可回填参数' },
-]
-
-export function ExportModal({
-  a,
-  extraction,
-  onClose,
-}: {
-  a: AuroraResult
-  extraction?: Extraction | null
-  onClose: () => void
-}) {
+export function ExportModal({ a, onClose }: { a: AuroraResult; onClose: () => void }) {
+  const t = useT()
   const [format, setFormat] = useState<ExportFormat>('css')
   const [copied, setCopied] = useState(false)
 
-  const code = useMemo(() => generateExport(format, a, extraction), [format, a, extraction])
-  const active = TABS.find((t) => t.id === format) ?? TABS[0]
+  const tabs: { id: ExportFormat; label: string; hint: string }[] = [
+    { id: 'css', label: 'CSS', hint: t('exportCssHint') },
+    { id: 'static', label: t('exportStatic'), hint: t('exportStaticHint') },
+    { id: 'json', label: 'JSON', hint: t('exportJsonHint') },
+  ]
+
+  const code = useMemo(() => generateExport(format, a), [format, a])
+  const active = tabs.find((tab) => tab.id === format) ?? tabs[0]
 
   const meta = useMemo(() => {
     const lines = code.split('\n').length
     const kb = new Blob([code]).size / 1024
-    return `${lines} 行 · ${kb.toFixed(1)} KB`
-  }, [code])
+    return `${lines} ${t('lines')} · ${kb.toFixed(1)} KB`
+  }, [code, t])
 
   const copy = async () => {
     try {
@@ -44,24 +37,24 @@ export function ExportModal({
 
   return (
     <Modal
-      title="导出代码"
+      title={t('exportTitle')}
       subtitle={active.hint}
       onClose={onClose}
       toolbar={
-        <div className="flex p-0.5 rounded-[var(--r-sm)] border border-[var(--line)] bg-white/[0.02]">
-          {TABS.map((t) => {
-            const on = t.id === format
+        <div className="flex p-0.5 rounded-[var(--r-sm)] smooth-r border border-[var(--line)] bg-white/[0.02]">
+          {tabs.map((tab) => {
+            const on = tab.id === format
             return (
               <button
-                key={t.id}
+                key={tab.id}
                 type="button"
-                onClick={() => setFormat(t.id)}
+                onClick={() => setFormat(tab.id)}
                 aria-pressed={on}
-                className={`h-7 px-3 rounded-[6px] text-[11.5px] font-semibold transition-colors ${
+                className={`h-7 px-3 rounded-[var(--r-xs)] smooth-r text-[11.5px] font-semibold transition-colors ${
                   on ? 'bg-white/[0.10] text-[var(--ink)]' : 'text-[var(--ink-3)] hover:text-[var(--ink-2)]'
                 }`}
               >
-                {t.label}
+                {tab.label}
               </button>
             )
           })}
@@ -77,10 +70,10 @@ export function ExportModal({
         <button
           type="button"
           onClick={copy}
-          className="ml-auto inline-flex items-center gap-2 h-9 px-4 rounded-[var(--r-sm)] bg-white text-[#0a0a0d] text-[12.5px] font-semibold transition-[background-color,scale] duration-150 hover:bg-white/90 active:scale-[0.99]"
+          className="ml-auto inline-flex items-center gap-2 h-9 px-4 rounded-[var(--r-sm)] smooth-r bg-white text-[#0a0a0d] text-[12.5px] font-semibold transition-[background-color,scale] duration-150 hover:bg-white/90 active:scale-[0.99]"
         >
           {copied ? <Check size={14} /> : <Copy size={14} />}
-          {copied ? '已复制' : '复制代码'}
+          {copied ? t('copied') : t('copyCode')}
         </button>
       </footer>
     </Modal>

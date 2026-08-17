@@ -2,8 +2,8 @@
 
 > **用途：** 后续迭代、修 bug、调参、接需求时的**单一事实源**。  
 > 给人和 AI 读：开新对话时 `@docs/PROJECT_REFERENCE.md` 即可恢复项目上下文。  
-> **路径：** `vibe-color-studio/` · **最后同步：** 2026-08-17（GitHub Pages）  
-> **约定：** 改布局 / 组件 / 默认值 / 色彩规则 / 导出后，**同步更新本文 + README**（见仓库 `.cursor/rules/sync-project-docs.mdc`）。
+> **路径：** `vibe-color-studio/` · **最后同步：** 2026-08-17（HEX / 图片状态隔离 + 图片叠图布局）  
+> **约定：** 改布局 / 组件 / 默认值 / 色彩规则 / 导出后，**同步更新本文 + README**（见仓库 `.cursor/rules/sync-project-docs.mdc`）。视觉 token 见 [DESIGN_SPEC.md](./DESIGN_SPEC.md)。
 
 ---
 
@@ -12,11 +12,11 @@
 | 项 | 内容 |
 |----|------|
 | **是什么** | 移动端 Aurora 动态渐变背景生成器（纯前端） |
-| **输入** | HEX 主色 **或** 上传图片（Fly 取色） |
-| **输出** | 5 光斑渐变 + 手机预览 + CSS / JSON / PNG 导出 |
-| **核心函数** | `generateAurora()` ← `useStudio` 状态 |
-| **参数真源** | `src/color/aurora.ts` → `BLOB_PROFILES` |
-| **默认模式** | `inputMode: 'hex'`，`lightnessId: 'dark'`，`showOverlay: true` |
+| **输入** | **两套互不互通的模式：** HEX 动态渐变 · 图片 OKLCH V2.3 纯色 |
+| **输出** | HEX：5 光斑渐变 + CSS/JSON/PNG；图片：纯色底 + PNG |
+| **核心函数** | HEX：`generateAurora()`；图片：`extractPosterColor()` |
+| **参数真源** | HEX：`src/color/aurora.ts` → `BLOB_PROFILES`；图片：`src/color/posterExtract.ts` → `POSTER_EXTRACT` |
+| **默认模式** | `inputMode: 'hex'`，`lightnessId: 'dark'`，`showOverlay: true`，`locale: 'zh'` |
 | **UI 风格** | Framer 式近黑极简 · Urbanist（chrome）· TikTok Sans（手机 Mock） |
 
 ---
@@ -27,7 +27,7 @@
 
 **痛点：** Figma 手工铺渐变 → 开发 CSS 复刻易漂移；封面图取色与客户端 Fly 不一致；黄绿等高感知色在 screen 混合下过亮；主色光斑边缘易生硬。
 
-**本工具：** 输入一个色或一张图 → 参数化 5 光斑 → 实时预览 → 可导出落地资产。
+**本工具：** HEX 输入参数化 5 光斑动态渐变；图片上传按 OKLCH V2.3 提取适合白字的纯色底。两套模式状态隔离。
 
 ---
 
@@ -35,29 +35,28 @@
 
 ```
 用户操作
-  · InspectorRail（输入 / 渐变 / 光斑布局）
-  · BottomToolbar（明度 · 下载帧 · 导出 · 隐藏 overlay）
+  · InspectorRail（HEX：输入/渐变/光斑；图片：上传 + V2.3 结果）
+  · BottomToolbar（HEX：明度·帧·导出·对比度；图片：帧·白字对比度）
         ↓
-useStudio (zustand)
+useStudio — hex 状态与 image 状态隔离
         ↓
-App.tsx useMemo → generateAurora(params) → AuroraResult
-        ↓
-PhonePreview · ExportModal · downloadBackgroundPng
+HEX：generateAurora → PhonePreview 光斑
+图片：extractPosterColor → PhonePreview 纯色底 + 圆角叠图
 ```
 
 **布局（2026-07 重设计后）：**
 
 | 区域 | 组件 | 职责 |
 |------|------|------|
-| 顶栏 | `AppHeader` | 品牌词 + 快捷键提示（←→ 明度 · ⌘E 导出） |
-| 中 | `PreviewStage` + `PhonePreview` | 手机框预览；短视口用 `.phone-fit` 缩放 |
-| 底悬浮 | `BottomToolbar` | 明度切换、当前帧 PNG、打开导出、`ContrastChip`、眼睛切换 overlay |
-| 右 320px | `InspectorRail` | `InspectorPanel` + 折叠「光斑布局」+ 底部白色「导出代码」 |
-| 弹层 | `ExportModal` | CSS / 静态 / JSON 三 Tab + 复制（**已取代**常驻 `ExportDrawer`） |
+| 顶栏 | `AppHeader` | 品牌词 + HEX 快捷键提示 + **中/英开关** |
+| 中 | `PreviewStage` + `PhonePreview` | HEX：渐变 + Feed Mock；图片：纯色底（未上传 `#2A2A2A`）+ 叠图（半屏宽方槽居中、槽顶约 68px、圆角 10、无阴影）+ 标题 + Ratio + 底部 HEX 胶囊 |
+| 底悬浮 | `BottomToolbar` | HEX：明度/导出/对比度；图片：当前帧 + 白字对比度 + 眼睛 |
+| 右 320px | `InspectorRail` | HEX：色值+折叠色相 / 渐变 / 光斑 / 导出；图片：仅上传与提取结果 |
+| 弹层 | `ExportModal` | **仅 HEX**：CSS / 静态 / JSON |
 
-**快捷键：** `⌘/Ctrl+E` 打开导出；`←` `→` 切换 Light/Dark（输入框内不触发）；`Esc` 关弹窗。
+**快捷键（仅 HEX）：** `⌘/Ctrl+E` 打开导出；`←` `→` 切换 Light/Dark（输入框内不触发）；`Esc` 关弹窗。
 
-**渲染链：** `App.tsx` 是唯一把 store 接到 `generateAurora` 的地方；改参数默认值看 `useStudio.ts`，改生成逻辑看 `aurora.ts`。
+**渲染链：** HEX 模式由 `App.tsx` 把 store 接到 `generateAurora`；图片模式用 `posterColor.color` 作纯色底。改 HEX 默认值看 `useStudio.ts`，改生成逻辑看 `aurora.ts`，改图片取色看 `posterExtract.ts`。
 
 **已删除（勿再引用）：** `ExportDrawer`、`LightnessTabs`、`PreviewStatusBar`。
 
@@ -71,8 +70,10 @@ vibe-color-studio/
 ├── src/
 │   ├── App.tsx                      # header + stage + rail + modal / 快捷键
 │   ├── index.css                    # 设计 token、Urbanist、.phone-mock / .glass
+│   ├── i18n.ts                      # chrome 中/英字典
 │   ├── store/useStudio.ts
-│   ├── color/                       # aurora · seed · fly · blob* · oklch
+│   ├── color/                       # aurora · seed · posterExtract · imageTitle · blob* · oklch
+│   │                                # flyExtract / quantize 仍在仓库，图片 Tab 不再调用
 │   ├── components/
 │   │   ├── AppHeader · BottomToolbar · ContrastChip
 │   │   ├── InspectorRail · InspectorPanel · BlobLayoutEditor
@@ -100,21 +101,25 @@ cd vibe-color-studio && npm install && npm run dev
 
 ## 4. 状态默认值（useStudio）
 
+HEX 与图片是两套独立字段，`inputMode` 只切 UI，**互不写回**。
+
 | 字段 | 默认 | 说明 |
 |------|------|------|
-| `inputMode` | `'hex'` | 切到 hex 会清 `lastExtraction`；分段控件顺序：色值 HEX → 图片取色 |
-| `hex` | `#4A6CF7` | **图片模式下 UI 不应用此值展示主色** |
-| `mergeSimilar` | `0.4` | → Fly tolerance 4 |
-| `richness` | `0.4` | 丰富度 |
+| `locale` | `'zh'` | 顶栏中/英；`localStorage` 键 `vibe-locale` |
+| `inputMode` | `'hex'` | 分段控件：色值 HEX → 图片取色；切换不清除另一套状态 |
+| `hex` | `#4A6CF7` | **仅 HEX 模式**；图片模式不用此值 |
+| `richness` | `0.4` | 丰富度（HEX） |
 | `speed` | `1` | 1.0× ≈ 旧版 0.8×（`SPEED_BASE=0.8`） |
 | `luminance` | `0` | 整体明度 ±1 → OKLCH L ±0.38 |
-| `lightnessId` | `'dark'` | |
+| `lightnessId` | `'dark'` | 仅 HEX 底栏切换 |
 | `blobAnchors` | 见 `blobLayout.ts` | 5 点：TL/TR/BL/BR/上中 |
-| `showOverlay` | `true` | 手机内 Feed Mock / 图片叠层；工具栏眼睛切换 |
+| `showOverlay` | `true` | HEX：Feed Mock；图片：叠图 + 标题；工具栏眼睛切换 |
+| `imageTitle` | `null` | 有意义的文件名，否则 `Lorem Ipsum` |
+| `posterColor` | `null` | 图片 V2.3 结果；`loadImage` 只写这一套 |
 
-**图片取色写回：** `loadImage` / `setMerge` → `applyExtractedMain()` 更新 `seedH`、`seedC`、`anchorOklch`、`anchorHsl`、`palette`、`lastExtraction`。**不更新 `hex` 字段。**
+**图片取色写回：** `loadImage` → `extractPosterColor()` → `posterColor`。**不更新** `hex` / `seedH` / `anchorOklch` / 光斑参数。
 
-**Inspector 主色展示：** 图片模式必须用 `palette[0].hex` / `anchorOklch`，不能用 store 里的 `hex`。
+**Inspector 图片主色：** 用 `posterColor.color` / `posterColor.oklch`，不能用 store 里的 `hex`。
 
 ---
 
@@ -171,24 +176,33 @@ profile 0 的 `lT/hueK/chromaK` **不参与颜色计算**；仅 size / softEdge 
 
 - 目标 ≥ **4.6:1**（`CONTRAST_TARGET`）
 - `enforceContrast` **只压 base 底色**，不压亮 blob
-- UI：`ContrastChip` 默认 `4.5:1`（一位小数）+ 等级徽章；hover 显示完整 WCAG / APCA / 文字色
+- UI（HEX）：`ContrastChip` 默认 `4.5:1`（一位小数）+ 等级徽章；hover 显示完整 WCAG / APCA / 文字色
+- UI（图片）：`WhiteContrastChip` 显示相对白字对比度（V2.3 目标 ≥ 9:1）
 
 ---
 
-## 6. 图片取色（Fly 子集）
+## 6. 图片取色（OKLCH V2.3）
 
-**入口：** `quantize.ts` → `flyExtract.ts`
+**入口：** `src/color/posterExtract.ts` → `extractPosterColor()`
 
-1. 缩图 max 96px  
-2. OKLab 聚类 + 容差合并（`mergeSimilar×10` → tolerance）  
-3. cap 16 色 → 权重排序 → OKLCH filter/tweak  
-4. UI 展示 palette 前 6 色  
+透明像素先合成到 **白底**，再网格采样。EXIF 朝向：`createImageBitmap(file, { imageOrientation: 'from-image' })`。
 
-**已对齐（部分）：** OKLab 聚类、容差、cap≤16、compositeWeight、OKLCH tweak  
+| 参数 | 值 |
+|------|-----|
+| 目标采样 | ~2400 点二维网格（格心取样） |
+| 候选 L | 0.20–0.65 |
+| 最大 C | 0.15 |
+| 色相桶 | 12（~30°）；C < 0.03 走中性桶 |
+| 代表色 | 桶内 L/C 中位数 + 色相圆周均值 |
+| 色域映射 | 超出 sRGB 时二分降 C，24 次 |
+| 白字对比度 | ≥ 9:1；不够则二分降 L |
+| 无候选 | `#000000` |
 
-**未对齐：** 区域裁剪、RGB565、Native SDK、完整 Fly 策略  
+**预览：** 纯色底 `posterColor.color`，未上传时 `#2A2A2A`。上传图放在半屏宽正方形槽内居中（不同比例共用中心点），槽顶约 68px，圆角 10、无阴影。标题距槽约 16px（TikTok Sans）；其下 `Ratio: W:H` 与底部 HEX 胶囊均为 Urbanist 11px、40% 白。底部始终有 HEX 胶囊（0.5px 描边 20% 白 + 4% 白 fill）。无意义文件名则 `Lorem Ipsum`。右栏缩略图 8px 圆角 + 60% smoothing、高度封顶。
 
-**配置真源：** `flyExtractConfig.ts` · `FLY_EXTRACT_DEFAULTS`
+**图片模式不提供：** 渐变滑块、光斑布局、明暗切换、导出 CSS/JSON、「合并相似色」。
+
+**旧 Fly 管线**（`quantize.ts` / `flyExtract.ts`）仍在仓库，**图片 Tab 不再调用**。
 
 ---
 
@@ -215,10 +229,10 @@ profile 0 的 `lT/hueK/chromaK` **不参与颜色计算**；仅 size / softEdge 
 |------|------|------|
 | CSS | `export/generators.ts` | 含 keyframes、每 blob gradCss/blur/delay |
 | 静态 | 固定 anchor 位置的 radial 叠层 | 无动画 |
-| JSON | params + blobs + 可选 extraction | 图片模式带 Fly meta |
-| PNG | `html-to-image` 截 `[data-aurora-export-root]` | 失败回退 Canvas；revoke blob URL 延后约 10s |
+| JSON | params + blobs | HEX only；不再附 Fly extraction |
+| PNG | HEX：`html-to-image` 截 `[data-aurora-export-root]`；图片：同节点纯色底，失败回退 Canvas 填色 | revoke blob URL 延后约 10s |
 
-入口：工具栏「导出代码」/ 右栏底部按钮 → `ExportModal`；工具栏「当前帧」→ `downloadBackgroundPng`。
+入口：HEX 工具栏「导出代码」/ 右栏底部按钮 → `ExportModal`；两模式工具栏「当前帧」→ HEX `downloadBackgroundPng` / 图片 `downloadSolidBackgroundPng`。
 
 改预览样式时，**同步检查** CSS 导出与 PNG 路径。
 
@@ -230,6 +244,7 @@ profile 0 的 `lT/hueK/chromaK` **不参与颜色计算**；仅 size / softEdge 
 |------|------|
 | 光斑数量 | 固定 5，移除 3/4/5 选择器 |
 | 色相展示 | HSL（对齐 Figma），非 OKLCH.h |
+| HEX 色相滑杆 | 放在色值框下，默认折叠；拖动同步 HEX 与色块 |
 | 主色 blob | 精确 anchorOklch，不跑 hueK 公式 |
 | 布局（旧） | 左栏 BlobLayoutEditor；手机预览无手柄 |
 | 布局（2026-07） | Framer 风：右栏控制 + 底悬浮工具栏 + 导出弹窗；光斑布局默认折叠 |
@@ -238,7 +253,11 @@ profile 0 的 `lT/hueK/chromaK` **不参与颜色计算**；仅 size / softEdge 
 | 动画 | Plan A 纯 CSS；Plan B WebGL 未做 |
 | 主色/上中面积 | 125%（其余 150%） |
 | 右上 hueK | −0.95（负偏加大） |
-| Inspector 图片主色 | 展示提取色，非 store.hex |
+| Inspector 图片主色 | 展示 `posterColor`，非 store.hex |
+| HEX / 图片状态 | **隔离**：切 Tab 互不覆盖 |
+| 图片预览 | 纯色底（默认 `#2A2A2A`）+ 叠图（半屏宽方槽居中、槽顶约 68px、圆角 10、无阴影）+ 文件名或 Lorem Ipsum + Ratio + 底部 HEX 胶囊 |
+| 图片对比度 | 简化 `WhiteContrastChip`：相对白字 |
+| chrome 语言 | 顶栏 `中文 | EN`，默认中文，`vibe-locale` |
 | 对比度条 | 精简为 `ContrastChip`：一位小数 + 徽章 + 文字方向；细节进 hover |
 | chrome 字体 | Urbanist Variable |
 | 手机 Mock 字体 | TikTok Sans VF（本机 `public/fonts/`，不进 Git；缺字回退系统字体） |
@@ -249,28 +268,30 @@ profile 0 的 `lT/hueK/chromaK` **不参与颜色计算**；仅 size / softEdge 
 
 ## 10. 已知限制 & 勿踩坑
 
-1. **`hex` 与图片模式脱节** — 展示/导出 seed 色时用 `palette[0]` 或 `anchorOklch`，不要用 `hex`。
-2. **Fly 仅为 Web 近似** — 与 Native 可能有 ΔE 差异。
-3. **无持久化** — 刷新丢状态；无用户系统。
-4. **Light + Mock** — Feed Mock 主要服务 Dark HEX 预览；图片模式未上传时眼睛按钮几乎无可见效果。
+1. **两套状态隔离** — 图片结果在 `posterColor`；HEX 渐变用 `hex` / `anchorOklch`。不要把提取色写回 HEX 字段。
+2. **图片不是 Aurora** — 不要在图片模式画 blob、开导出弹窗或明暗切换。
+3. **locale 是唯一持久化** — 其余刷新丢失；无用户系统。
+4. **Light + Mock** — Feed Mock 主要服务 Dark HEX 预览；图片模式眼睛按钮切换叠图。
 5. **PNG 依赖 DOM** — headless/隐藏 tab 可能截不到；靠 Canvas fallback。
 6. **dev server** — 须 `npm run dev` 且保持进程；Cursor 会话空闲 / 休眠后常会停掉。分享给别人用 GitHub Pages：https://ppguanyworks.github.io/Vibe-color-studio/
 7. **改 BLOB_PROFILES** — 同步更新本文 §5.3。
 8. **改 gradCss/blur** — 同步 `blobGradient.ts`、`PhonePreview`、`generators.ts`、`renderBackgroundImage.ts`。
 9. **窄屏** — 右栏固定 320px；&lt; ~640px 舞台会挤；工具栏在 `lg` 以下图标化。
 10. **勿引用已删组件** — `ExportDrawer` / `LightnessTabs` / `PreviewStatusBar`。
+11. **Fly 文件未删除** — `flyExtract*.ts` / `quantize.ts` 是遗留，图片 Tab 不要重新接上。
+12. **叠图标题** — 只用文件名；`image.png` / `IMG_1234` 等无意义名显示 `Lorem Ipsum`。不做 OCR。
 
 ---
 
 ## 11. 后续迭代 backlog（未实现）
 
-- [ ] Fly 全量 / Native parity 测试与文档
 - [ ] 项目保存、URL 分享、历史记录
 - [ ] WebGL / shader 流体背景（Plan B）
 - [ ] Figma 插件 / Code Connect
 - [ ] Light 模式 Mock + 对比度策略完善
 - [ ] 光斑数量可配置（若产品重新需要）
 - [ ] 窄屏右栏折叠 / 抽屉（产品待定）
+- [x] HEX / 图片双模式隔离 + OKLCH V2.3 纯色取色
 - [x] 部署静态站（GitHub Pages）：`.github/workflows/deploy-pages.yml`，`vite.config.ts` 在 CI 设 `base: /Vibe-color-studio/`
 
 ---
@@ -282,15 +303,16 @@ profile 0 的 `lT/hueK/chromaK` **不参与颜色计算**；仅 size / softEdge 
 | 光斑颜色逻辑 / profile | `color/aurora.ts` |
 | 光斑大小 / 默认位置 | `aurora.ts` BLOB_PROFILES · `blobLayout.ts` |
 | 渐变边缘 / blur | `blobGradient.ts` · `aurora-keyframes.css` |
-| 取色 / 合并容差 | `flyExtract*.ts` · `quantize.ts` · `InspectorPanel` |
+| 取色（图片） | `color/posterExtract.ts` |
+| 叠图标题 | `color/imageTitle.ts` · `PhonePreview` |
 | HEX / HSL 解析 | `seedColor.ts` |
 | 深浅色预设 | `presets/lightness.ts` |
-| 默认值 / 加载图片 / overlay | `store/useStudio.ts` |
+| 默认值 / 加载图片 / overlay / 语言 | `store/useStudio.ts` · `i18n.ts` |
 | 导出格式 / 弹窗 | `export/generators.ts` · `ExportModal` |
-| PNG 下载 | `export/renderBackgroundImage.ts` |
+| PNG 下载 | `export/renderBackgroundImage.ts`（HEX / 纯色两条路径） |
 | 顶栏 / 工具栏 / 右栏 | `AppHeader` · `BottomToolbar` · `InspectorRail` |
 | 手机 Mock UI / 字体 | `MusicFeedMock` · `tokens/tux-preview` · `index.css` `.phone-mock` |
-| 设计 token / chrome 字体 | `index.css` |
+| 设计 token / chrome 字体 / 圆角 smoothing | `index.css` · `docs/DESIGN_SPEC.md` |
 | 动效路径 | `styles/aurora-keyframes.css` |
 | 整体壳子 | `App.tsx` |
 | GitHub Pages | `.github/workflows/deploy-pages.yml` · `vite.config.ts` `base` |
@@ -301,8 +323,9 @@ profile 0 的 `lT/hueK/chromaK` **不参与颜色计算**；仅 size / softEdge 
 
 | 词 | 含义 |
 |----|------|
-| seed / 主色 | 输入 HEX 或 Fly 提取的代表色 |
-| anchorOklch | 主色光斑锁定的 OKLCH |
+| seed / 主色 | HEX 输入色；图片模式则是 V2.3 `posterColor` |
+| posterColor | 图片提取的纯色结果（HEX + OKLCH + 白字对比度） |
+| anchorOklch | HEX 主色光斑锁定的 OKLCH |
 | seedH / seedC | HSL 色相 + OKLCH 纯度（推导副色用） |
 | blob / 光斑 | radial-gradient + blur 的一层 |
 | richness | 丰富度，副色色相/纯度 spread |

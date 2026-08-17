@@ -2,12 +2,14 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useStudio } from './store/useStudio'
 import { generateAurora } from './color/aurora'
 import { LIGHTNESS_PRESETS } from './presets/lightness'
-import { downloadBackgroundPng } from './export/renderBackgroundImage'
+import { downloadBackgroundPng, downloadSolidBackgroundPng } from './export/renderBackgroundImage'
 import { AppHeader } from './components/AppHeader'
 import { BottomToolbar } from './components/BottomToolbar'
 import { ExportModal } from './components/ExportModal'
 import { InspectorRail } from './components/InspectorRail'
+import { IMAGE_FALLBACK_HEX } from './components/PhonePreview'
 import { PreviewStage } from './components/PreviewStage'
+import { formatAspectRatio } from './color/imageTitle'
 
 function isTypingTarget(el: EventTarget | null) {
   return (
@@ -24,7 +26,8 @@ export default function App() {
   const anchorHsl = useStudio((s) => s.anchorHsl)
   const inputMode = useStudio((s) => s.inputMode)
   const imageUrl = useStudio((s) => s.imageUrl)
-  const lastExtraction = useStudio((s) => s.lastExtraction)
+  const imageTitle = useStudio((s) => s.imageTitle)
+  const posterColor = useStudio((s) => s.posterColor)
   const lightnessId = useStudio((s) => s.lightnessId)
   const richness = useStudio((s) => s.richness)
   const speed = useStudio((s) => s.speed)
@@ -55,15 +58,20 @@ export default function App() {
   const downloadFrame = useCallback(async () => {
     setDownloading(true)
     try {
-      await downloadBackgroundPng(aurora)
+      if (inputMode === 'image') {
+        await downloadSolidBackgroundPng(posterColor?.color ?? IMAGE_FALLBACK_HEX)
+      } else {
+        await downloadBackgroundPng(aurora)
+      }
     } finally {
       setDownloading(false)
     }
-  }, [aurora])
+  }, [aurora, inputMode, posterColor])
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (isTypingTarget(e.target)) return
+      if (inputMode !== 'hex') return
 
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'e') {
         e.preventDefault()
@@ -84,7 +92,7 @@ export default function App() {
 
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [exportOpen, lightnessId, setLightness])
+  }, [exportOpen, inputMode, lightnessId, setLightness])
 
   return (
     <div className="h-screen flex flex-col overflow-hidden">
@@ -95,7 +103,12 @@ export default function App() {
           a={aurora}
           inputMode={inputMode}
           imageUrl={imageUrl}
+          imageTitle={imageTitle}
+          imageRatio={
+            posterColor ? formatAspectRatio(posterColor.width, posterColor.height) : null
+          }
           showOverlay={showOverlay}
+          solidHex={posterColor?.color ?? IMAGE_FALLBACK_HEX}
           toolbar={
             <BottomToolbar
               a={aurora}
@@ -109,13 +122,7 @@ export default function App() {
         <InspectorRail a={aurora} onExportCode={() => setExportOpen(true)} />
       </main>
 
-      {exportOpen && (
-        <ExportModal
-          a={aurora}
-          extraction={inputMode === 'image' ? lastExtraction : null}
-          onClose={() => setExportOpen(false)}
-        />
-      )}
+      {exportOpen && inputMode === 'hex' && <ExportModal a={aurora} onClose={() => setExportOpen(false)} />}
     </div>
   )
 }

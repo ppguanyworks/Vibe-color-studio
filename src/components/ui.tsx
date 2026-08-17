@@ -43,7 +43,7 @@ export function CollapsibleSection({
           type="button"
           onClick={onToggle}
           aria-expanded={open}
-          className="group flex items-center gap-1.5 -ml-1 pl-1 pr-1.5 py-1 rounded-[var(--r-xs)] hover:bg-white/[0.04] transition-colors"
+          className="group flex items-center gap-1.5 -ml-1 pl-1 pr-1.5 py-1 rounded-[var(--r-xs)] smooth-r hover:bg-white/[0.04] transition-colors"
         >
           <span
             className="text-[var(--ink-4)] group-hover:text-[var(--ink-2)] transition-[transform,color] duration-200"
@@ -58,6 +58,10 @@ export function CollapsibleSection({
       {open && <div className="mt-3.5 anim-fade">{children}</div>}
     </section>
   )
+}
+
+export function ColorSwatch({ color }: { color: string }) {
+  return <span className="color-swatch" style={{ background: color }} aria-hidden />
 }
 
 export function Divider() {
@@ -80,7 +84,7 @@ export function GhostButton({
       type="button"
       onClick={onClick}
       title={title}
-      className="inline-flex items-center gap-1.5 h-6 px-2 rounded-[var(--r-xs)] text-[11px] font-medium text-[var(--ink-3)] hover:text-[var(--ink)] hover:bg-white/[0.06] transition-colors"
+      className="inline-flex items-center gap-1.5 h-6 px-2 rounded-[var(--r-xs)] smooth-r text-[11px] font-medium text-[var(--ink-3)] hover:text-[var(--ink)] hover:bg-white/[0.06] transition-colors"
     >
       {children}
     </button>
@@ -100,7 +104,7 @@ export function PrimaryButton({
     <button
       type="button"
       onClick={onClick}
-      className={`inline-flex items-center justify-center gap-2 h-11 w-full rounded-[var(--r-md)] bg-white text-[#0a0a0d] text-[13px] font-semibold tracking-[-0.01em] transition-[background-color,scale] duration-150 hover:bg-white/90 active:scale-[0.99] ${className}`}
+      className={`inline-flex items-center justify-center gap-2 h-11 w-full rounded-[var(--r-md)] smooth-r bg-white text-[#0a0a0d] text-[13px] font-semibold tracking-[-0.01em] transition-[background-color,scale] duration-150 hover:bg-white/90 active:scale-[0.99] ${className}`}
     >
       {children}
     </button>
@@ -108,7 +112,7 @@ export function PrimaryButton({
 }
 
 interface SliderProps {
-  label: string
+  label?: string
   value: number
   min: number
   max: number
@@ -122,12 +126,18 @@ interface SliderProps {
 export function Slider({ label, value, min, max, step, onChange, display, hint, hue }: SliderProps) {
   return (
     <div className="flex flex-col gap-2" title={hint}>
-      <div className="flex items-baseline justify-between gap-3">
-        <span className="text-[12px] font-medium text-[var(--ink-2)] leading-none">{label}</span>
-        {display !== undefined && (
-          <span className="num text-[11px] font-medium text-[var(--ink)] leading-none">{display}</span>
-        )}
-      </div>
+      {(label || display !== undefined) && (
+        <div className="flex items-baseline justify-between gap-3">
+          {label ? (
+            <span className="text-[12px] font-medium text-[var(--ink-2)] leading-none">{label}</span>
+          ) : (
+            <span />
+          )}
+          {display !== undefined && (
+            <span className="num text-[11px] font-medium text-[var(--ink)] leading-none">{display}</span>
+          )}
+        </div>
+      )}
       <input
         type="range"
         className={`slider${hue ? ' hue-track' : ''}`}
@@ -135,7 +145,7 @@ export function Slider({ label, value, min, max, step, onChange, display, hint, 
         max={max}
         step={step}
         value={value}
-        aria-label={label}
+        aria-label={label ?? hint ?? 'slider'}
         onChange={(e) => onChange(parseFloat(e.target.value))}
       />
     </div>
@@ -154,7 +164,7 @@ export function SegmentControl<T extends string>({
   return (
     <div
       role="tablist"
-      className="flex p-0.5 rounded-[var(--r-md)] border border-[var(--line)] bg-white/[0.02]"
+      className="flex p-0.5 rounded-[var(--r-md)] smooth-r border border-[var(--line)] bg-white/[0.02]"
     >
       {options.map((o) => {
         const active = value === o.id
@@ -165,7 +175,7 @@ export function SegmentControl<T extends string>({
             role="tab"
             aria-selected={active}
             onClick={() => onChange(o.id)}
-            className={`flex-1 h-8 rounded-[var(--r-sm)] text-[12px] font-semibold tracking-[-0.005em] transition-colors ${
+            className={`flex-1 h-8 rounded-[var(--r-sm)] smooth-r text-[12px] font-semibold tracking-[-0.005em] transition-colors ${
               active
                 ? 'bg-white/[0.10] text-[var(--ink)] shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]'
                 : 'text-[var(--ink-3)] hover:text-[var(--ink-2)]'
@@ -218,7 +228,7 @@ export function Modal({
         aria-modal="true"
         aria-label={title}
         style={{ width: `min(${width}px, 100%)` }}
-        className="relative anim-pop flex flex-col max-h-[min(78vh,720px)] rounded-[var(--r-xl)] border border-[var(--line-2)] bg-[var(--bg-elev)] shadow-[0_40px_120px_-24px_rgba(0,0,0,0.9)] overflow-hidden"
+        className="relative anim-pop flex flex-col max-h-[min(78vh,720px)] rounded-[var(--r-xl)] smooth-r border border-[var(--line-2)] bg-[var(--bg-elev)] shadow-[0_40px_120px_-24px_rgba(0,0,0,0.9)] overflow-hidden"
       >
         <header className="shrink-0 flex items-center gap-4 h-14 px-5 border-b border-[var(--line)]">
           <div className="min-w-0">

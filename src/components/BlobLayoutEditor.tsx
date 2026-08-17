@@ -1,14 +1,17 @@
 import { useCallback, useMemo, useRef, useState } from 'react'
 import type { AuroraResult, Blob as AuroraBlob } from '../color/aurora'
 import { BLOB_COUNT, clampAnchor } from '../color/blobLayout'
+import { useT, type MessageKey } from '../i18n'
 import { useStudio } from '../store/useStudio'
 
-const BLOB_LABELS = ['主色', '右上', '左下', '右下', '上中'] as const
+const BLOB_LABEL_KEYS = ['blobMain', 'blobTR', 'blobBL', 'blobBR', 'blobTop'] as const satisfies MessageKey[]
 
 export function BlobLayoutEditor({ a }: { a: AuroraResult }) {
+  const t = useT()
   const canvasRef = useRef<HTMLDivElement>(null)
   const dragIndex = useRef<number | null>(null)
   const [activeIndex, setActiveIndex] = useState<number | null>(null)
+  const blobLabels = BLOB_LABEL_KEYS.map((key) => t(key))
 
   const blobAnchors = useStudio((s) => s.blobAnchors)
   const setBlobAnchor = useStudio((s) => s.setBlobAnchor)
@@ -70,7 +73,7 @@ export function BlobLayoutEditor({ a }: { a: AuroraResult }) {
         onPointerUp={endDrag}
         onPointerCancel={endDrag}
         role="application"
-        aria-label="光斑布局编辑器"
+        aria-label={t('blobEditorAria')}
       >
         <div className="absolute inset-0" style={{ background: a.base.hex }} aria-hidden>
           {Array.from({ length: BLOB_COUNT }, (_, id) => {
@@ -110,7 +113,7 @@ export function BlobLayoutEditor({ a }: { a: AuroraResult }) {
             <button
               key={i}
               type="button"
-              aria-label={`${BLOB_LABELS[i]} 光斑`}
+              aria-label={blobLabels[i]}
               aria-pressed={selected}
               onPointerDown={startDrag(i)}
               className={`absolute z-[2] -translate-x-1/2 -translate-y-1/2 rounded-full border touch-none outline-none transition-[scale,box-shadow] duration-150 ease-out cursor-grab active:cursor-grabbing ${
@@ -125,9 +128,9 @@ export function BlobLayoutEditor({ a }: { a: AuroraResult }) {
       </div>
 
       <div className="flex flex-wrap gap-1">
-        {BLOB_LABELS.map((label, i) => (
+        {blobLabels.map((label, i) => (
           <button
-            key={label}
+            key={BLOB_LABEL_KEYS[i]}
             type="button"
             onClick={() => setActiveIndex(i)}
             className={`inline-flex items-center gap-1.5 h-6 px-2 rounded-[var(--r-xs)] text-[10.5px] font-medium border transition-colors ${
@@ -147,8 +150,8 @@ export function BlobLayoutEditor({ a }: { a: AuroraResult }) {
 
       <p className="num h-3 text-[10px] text-[var(--ink-4)] leading-none m-0">
         {activeAnchor && activeIndex !== null
-          ? `${BLOB_LABELS[activeIndex]} · ${Math.round(activeAnchor[0])}% ${Math.round(activeAnchor[1])}%`
-          : '拖动控制点调整位置'}
+          ? `${blobLabels[activeIndex]} · ${Math.round(activeAnchor[0])}% ${Math.round(activeAnchor[1])}%`
+          : t('blobDragHint')}
       </p>
     </div>
   )

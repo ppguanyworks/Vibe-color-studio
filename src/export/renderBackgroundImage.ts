@@ -94,6 +94,27 @@ export async function exportBackgroundPng(a: AuroraResult, scale = 3): Promise<B
 
 export async function downloadBackgroundPng(a: AuroraResult, scale = 3): Promise<void> {
   const blob = await exportBackgroundPng(a, scale)
+  triggerPngDownload(blob)
+}
+
+export async function downloadSolidBackgroundPng(hex: string, scale = 3): Promise<void> {
+  let blob: Blob
+  try {
+    blob = await captureBackgroundFromPreview(scale)
+  } catch {
+    const canvas = document.createElement('canvas')
+    canvas.width = PHONE_INNER_W * scale
+    canvas.height = PHONE_INNER_H * scale
+    const ctx = canvas.getContext('2d')
+    if (!ctx) throw new Error('Canvas not supported')
+    ctx.fillStyle = hex
+    ctx.fillRect(0, 0, canvas.width, canvas.height)
+    blob = await canvasToPngBlob(canvas)
+  }
+  triggerPngDownload(blob)
+}
+
+function triggerPngDownload(blob: Blob) {
   const url = URL.createObjectURL(blob)
   const link = document.createElement('a')
   link.href = url
@@ -101,6 +122,5 @@ export async function downloadBackgroundPng(a: AuroraResult, scale = 3): Promise
   document.body.appendChild(link)
   link.click()
   link.remove()
-  // Revoking synchronously can cancel the download before the browser reads the blob.
   setTimeout(() => URL.revokeObjectURL(url), 10_000)
 }

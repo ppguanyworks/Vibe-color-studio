@@ -6,17 +6,36 @@ interface PreviewStageProps {
   a: AuroraResult
   inputMode: 'hex' | 'image'
   imageUrl: string | null
+  imageTitle?: string | null
+  imageRatio?: string | null
   showOverlay: boolean
+  solidHex?: string | null
   toolbar: ReactNode
 }
 
-export function PreviewStage({ a, inputMode, imageUrl, showOverlay, toolbar }: PreviewStageProps) {
+export function PreviewStage({
+  a,
+  inputMode,
+  imageUrl,
+  imageTitle,
+  imageRatio,
+  showOverlay,
+  solidHex,
+  toolbar,
+}: PreviewStageProps) {
   return (
     <div className="relative flex-1 min-w-0 h-full overflow-hidden">
-      {/* safe centering keeps the frame fully visible on short viewports instead of clipping it */}
       <div className="h-full flex flex-col items-center justify-center-safe overflow-y-auto scroll-thin px-8 pt-8 pb-28">
         <div className="anim-rise phone-fit">
-          <PhonePreview a={a} inputMode={inputMode} imageUrl={imageUrl} showOverlay={showOverlay} />
+          <PhonePreview
+            a={a}
+            inputMode={inputMode}
+            imageUrl={imageUrl}
+            imageTitle={imageTitle}
+            imageRatio={imageRatio}
+            showOverlay={showOverlay}
+            solidHex={solidHex}
+          />
         </div>
       </div>
 

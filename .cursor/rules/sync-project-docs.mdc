@@ -12,6 +12,7 @@ alwaysApply: true
 | 文件 | 更新什么 |
 |------|----------|
 | `docs/PROJECT_REFERENCE.md` | 布局、组件名、数据流、默认值、色彩规则、导出、决策表、坑、backlog、「改 X 看哪里」；顶部「最后同步」日期 |
+| `docs/DESIGN_SPEC.md` | 视觉 token、圆角 smoothing、字体阶梯、组件外观规则（改 chrome 样式时） |
 | `README.md` | 简介、功能列表、界面结构概览、运行方式（仅当对外说明变化时） |
 
 ## 触发条件（任一即更新）
