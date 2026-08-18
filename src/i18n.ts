@@ -4,7 +4,6 @@ export type Locale = 'zh' | 'en'
 
 export const messages = {
   zh: {
-    subtitle: '动态渐变背景生成器',
     shortcutMode: '切换模式',
     shortcutExport: '导出',
     input: '输入',
@@ -54,7 +53,6 @@ export const messages = {
     blobDragHint: '拖动控制点调整位置',
   },
   en: {
-    subtitle: 'Aurora gradient generator',
     shortcutMode: 'Switch mode',
     shortcutExport: 'Export',
     input: 'Input',

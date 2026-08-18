@@ -4,7 +4,7 @@ import { PHONE_INNER_W } from '../export/renderBackgroundImage'
 import { MusicFeedMock } from './MusicFeedMock'
 
 const IMAGE_MAX = PHONE_INNER_W / 2
-export const IMAGE_FALLBACK_HEX = '#2A2A2A'
+export const IMAGE_FALLBACK_HEX = '#61030C'
 
 interface PhonePreviewProps {
   a: AuroraResult

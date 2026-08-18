@@ -48,8 +48,8 @@ HEX：generateAurora → PhonePreview 光斑
 
 | 区域 | 组件 | 职责 |
 |------|------|------|
-| 顶栏 | `AppHeader` | 品牌词 + HEX 快捷键提示 + **中/英开关** |
-| 中 | `PreviewStage` + `PhonePreview` | HEX：渐变 + Feed Mock；图片：纯色底（未上传 `#2A2A2A`）+ 叠图（半屏宽方槽居中、槽顶约 68px、圆角 10、无阴影）+ 标题 + Ratio + 底部 HEX 胶囊 |
+| 顶栏 | `AppHeader` | 品牌词 + HEX 快捷键提示 + **中/英开关**（无副标，避免窄屏挤掉语言切换） |
+| 中 | `PreviewStage` + `PhonePreview` | HEX：渐变 + Feed Mock；图片：纯色底（未上传 `#61030C`）+ 叠图（半屏宽方槽居中、槽顶约 68px、圆角 10、无阴影）+ 标题 + Ratio + 底部 HEX 胶囊 |
 | 底悬浮 | `BottomToolbar` | HEX：明度/导出/对比度；图片：当前帧 + 白字对比度 + 眼睛 |
 | 右 320px | `InspectorRail` | HEX：色值+折叠色相 / 渐变 / 光斑 / 导出；图片：仅上传与提取结果 |
 | 弹层 | `ExportModal` | **仅 HEX**：CSS / 静态 / JSON |
@@ -198,7 +198,7 @@ profile 0 的 `lT/hueK/chromaK` **不参与颜色计算**；仅 size / softEdge 
 | 白字对比度 | ≥ 9:1；不够则二分降 L |
 | 无候选 | `#000000` |
 
-**预览：** 纯色底 `posterColor.color`，未上传时 `#2A2A2A`。上传图放在半屏宽正方形槽内居中（不同比例共用中心点），槽顶约 68px，圆角 10、无阴影。标题距槽约 16px（TikTok Sans）；其下 `Ratio: W:H` 与底部 HEX 胶囊均为 Urbanist 11px、40% 白。底部始终有 HEX 胶囊（0.5px 描边 20% 白 + 4% 白 fill）。无意义文件名则 `Lorem Ipsum`。右栏缩略图 8px 圆角 + 60% smoothing、高度封顶。
+**预览：** 纯色底 `posterColor.color`，未上传时 `#61030C`。上传图放在半屏宽正方形槽内居中（不同比例共用中心点），槽顶约 68px，圆角 10、无阴影。标题距槽约 16px（TikTok Sans）；其下 `Ratio: W:H` 与底部 HEX 胶囊均为 Urbanist 11px、40% 白。底部始终有 HEX 胶囊（0.5px 描边 20% 白 + 4% 白 fill）。无意义文件名则 `Lorem Ipsum`。右栏缩略图 8px 圆角 + 60% smoothing、高度封顶。
 
 **图片模式不提供：** 渐变滑块、光斑布局、明暗切换、导出 CSS/JSON、「合并相似色」。
 
@@ -255,7 +255,7 @@ profile 0 的 `lT/hueK/chromaK` **不参与颜色计算**；仅 size / softEdge 
 | 右上 hueK | −0.95（负偏加大） |
 | Inspector 图片主色 | 展示 `posterColor`，非 store.hex |
 | HEX / 图片状态 | **隔离**：切 Tab 互不覆盖 |
-| 图片预览 | 纯色底（默认 `#2A2A2A`）+ 叠图（半屏宽方槽居中、槽顶约 68px、圆角 10、无阴影）+ 文件名或 Lorem Ipsum + Ratio + 底部 HEX 胶囊 |
+| 图片预览 | 纯色底（默认 `#61030C`）+ 叠图（半屏宽方槽居中、槽顶约 68px、圆角 10、无阴影）+ 文件名或 Lorem Ipsum + Ratio + 底部 HEX 胶囊 |
 | 图片对比度 | 简化 `WhiteContrastChip`：相对白字 |
 | chrome 语言 | 顶栏 `中文 | EN`，默认中文，`vibe-locale` |
 | 对比度条 | 精简为 `ContrastChip`：一位小数 + 徽章 + 文字方向；细节进 hover |

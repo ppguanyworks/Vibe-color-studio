@@ -18,7 +18,7 @@ function LocaleSwitch() {
     <div
       role="group"
       aria-label="Language"
-      className="flex p-0.5 rounded-[var(--r-sm)] smooth-r border border-[var(--line)] bg-white/[0.02]"
+      className="flex shrink-0 p-0.5 rounded-[var(--r-sm)] smooth-r border border-[var(--line)] bg-white/[0.02]"
     >
       {([
         { id: 'zh' as const, label: '中文' },
@@ -31,7 +31,7 @@ function LocaleSwitch() {
             type="button"
             onClick={() => setLocale(o.id)}
             aria-pressed={on}
-            className={`h-7 min-w-[36px] px-2.5 rounded-[var(--r-xs)] smooth-r text-[11px] font-semibold tracking-[0.04em] transition-colors ${
+            className={`h-7 min-w-[36px] px-2.5 rounded-[var(--r-xs)] smooth-r text-[11px] font-semibold tracking-[0.04em] whitespace-nowrap transition-colors ${
               on ? 'bg-white/[0.10] text-[var(--ink)]' : 'text-[var(--ink-3)] hover:text-[var(--ink-2)]'
             }`}
           >
@@ -54,8 +54,6 @@ export function AppHeader() {
         <h1 className="text-[14.5px] font-bold tracking-[-0.02em] text-[var(--ink)] m-0 leading-none whitespace-nowrap">
           Vibe Color Studio
         </h1>
-        <span className="w-px h-3.5 bg-[var(--line-2)] shrink-0" aria-hidden />
-        <p className="micro m-0 whitespace-nowrap">{t('subtitle')}</p>
 
         <div className="ml-auto flex items-center gap-4">
           {inputMode === 'hex' && (
